@@ -21,6 +21,14 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const { user, loading: authLoading } = useAuth();
+
+    useEffect(() => {
+        if (!authLoading && user) {
+            router.push('/dashboard');
+        }
+    }, [user, authLoading, router]);
+
 
     useEffect(() => {
         const handleCredentialResponse = async (response: any) => {

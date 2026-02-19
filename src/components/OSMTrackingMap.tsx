@@ -40,7 +40,7 @@ class MapErrorBoundary extends Component<
    ═══════════════════════════════════════════════════ */
 const createCustomIcon = (html: string, size: [number, number], className: string) => {
     return L.divIcon({
-        html: `<div class="marker-pin-wrapper ${className}">${html}</div>`,
+        html: `<div class="marker-pin-wrapper ${className}" style="width: ${size[0]}px; height: ${size[1]}px;">${html}</div>`,
         className: 'custom-leaflet-icon',
         iconSize: size,
         iconAnchor: [size[0] / 2, size[1] / 2],
@@ -96,31 +96,32 @@ const clientIcon = createCustomIcon(
 );
 
 // Vehicle Icons — Distinct per transport mode
+// Premium Vehicle Illustrations (SVG-based for fast loading but detailed)
 const motoIcon = createCustomIcon(
     `<div class="vehicle-icon moto-vehicle">
-        <div class="vehicle-glow moto-glow"></div>
-        <div class="vehicle-body"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#E67E22" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h3"/></svg></div>
-        <div class="vehicle-shadow"></div>
+        <div class="vehicle-image-container">
+            <img src="/images/vehicles/moto.png" alt="Moto" class="vehicle-img" />
+        </div>
     </div>`,
-    [60, 60], 'vehicle-moto'
+    [40, 40], 'vehicle-moto'
 );
 
 const carIcon = createCustomIcon(
     `<div class="vehicle-icon car-vehicle">
-        <div class="vehicle-glow car-glow"></div>
-        <div class="vehicle-body"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></div>
-        <div class="vehicle-shadow"></div>
+        <div class="vehicle-image-container">
+            <img src="/images/vehicles/car.png" alt="Car" class="vehicle-img" />
+        </div>
     </div>`,
-    [60, 60], 'vehicle-car'
+    [80, 80], 'vehicle-car'
 );
 
 const planeIcon = createCustomIcon(
     `<div class="vehicle-icon plane-vehicle">
-        <div class="vehicle-glow plane-glow"></div>
-        <div class="vehicle-body"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg></div>
-        <div class="vehicle-shadow"></div>
+        <div class="vehicle-image-container">
+            <img src="https://i.pinimg.com/736x/1a/83/f2/1a83f2ae34c7becab2357e247ed3bcae.jpg" alt="Avion" class="vehicle-img" />
+        </div>
     </div>`,
-    [70, 70], 'vehicle-plane'
+    [40, 40], 'vehicle-plane'
 );
 
 const originIcon = createCustomIcon(
@@ -193,7 +194,10 @@ function MapRecenter({ center, zoom }: { center: [number, number]; zoom: number 
 function buildCurvedRoute(start: [number, number], end: [number, number], points: number = 80): [number, number][] {
     const route: [number, number][] = [];
     const dist = Math.sqrt(Math.pow(end[0] - start[0], 2) + Math.pow(end[1] - start[1], 2));
-    const curvature = dist * 0.12;
+
+    // International routes get a classic arc, local routes are straighter
+    const isLocal = dist < 5;
+    const curvature = isLocal ? dist * 0.02 : dist * 0.15;
 
     for (let i = 0; i <= points; i++) {
         const t = i / points;

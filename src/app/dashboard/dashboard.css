@@ -1333,3 +1333,328 @@
         height: 450px;
     }
 }
+
+/* ── PREMIUM TRACKING EFFECTS ── */
+.glovo-timeline-fill {
+    position: relative;
+    overflow: hidden;
+    animation: gradientShift 4s linear infinite;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 400% 50%;
+    }
+}
+
+.timeline-pulse-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: timelineShimmer 2s infinite;
+}
+
+@keyframes timelineShimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Vehicle Illustration Styles */
+.vehicle-illustration {
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 8px 15px rgba(0, 0, 0, 0.2));
+    transition: transform 0.3s ease;
+}
+
+.vehicle-icon:hover .vehicle-illustration {
+    transform: scale(1.1);
+}
+
+.moto-vehicle .vehicle-illustration {
+    animation: motoRide 0.8s infinite ease-in-out;
+}
+
+@keyframes motoRide {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0);
+    }
+
+    50% {
+        transform: translateY(-3px) rotate(1deg);
+    }
+}
+
+.car-vehicle .vehicle-illustration {
+    animation: carDrive 2s infinite ease-in-out;
+}
+
+@keyframes carDrive {
+
+    0%,
+    100% {
+        transform: translateX(0) scaleY(1);
+    }
+
+    50% {
+        transform: translateX(2px) scaleY(0.98);
+    }
+}
+
+.plane-vehicle .vehicle-illustration {
+    animation: planeFly 4s infinite ease-in-out;
+}
+
+@keyframes planeFly {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(-2deg);
+    }
+
+    50% {
+        transform: translateY(-10px) rotate(2deg);
+    }
+}
+
+.eta-floating-badge {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    background: var(--secondary);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 10px 25px rgba(46, 204, 113, 0.4);
+    z-index: 1000;
+    animation: badgePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes badgePop {
+    from {
+        transform: scale(0) translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+.eta-icon-pulse {
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+    animation: whitePulse 1.5s infinite;
+}
+
+@keyframes whitePulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
+}
+
+/* Premium Icon Wrappers */
+.premium-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: white;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.premium-icon-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 21px;
+    z-index: -1;
+    opacity: 0.3;
+}
+
+.premium-icon-wrapper.gold::after {
+    background: var(--primary);
+}
+
+.premium-icon-wrapper.green::after {
+    background: var(--secondary);
+}
+
+.premium-icon-wrapper.orange::after {
+    background: #E67E22;
+}
+
+.premium-icon-wrapper svg {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+/* Vehicle Image Icons */
+.vehicle-image-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+}
+
+.vehicle-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+    transition: transform 0.3s ease;
+}
+
+.moto-vehicle .vehicle-img {
+    transform: scale(1);
+}
+
+.car-vehicle .vehicle-img {
+    width: 60px;
+    height: 60px;
+    transform: scaleX(-1);
+}
+
+.plane-vehicle .vehicle-img {
+    transform: scale(1);
+}
+
+/* ── MODERN GEOMETRIC TIMELINE v3 ── */
+.modern-tracking-timeline {
+    padding: 3rem 2rem;
+    border-radius: 24px;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: visible;
+}
+
+.timeline-connector-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.timeline-line-base {
+    position: absolute;
+    top: 20px;
+    /* Moitié de la taille de step-marker (40px / 2) */
+    left: 40px;
+    right: 40px;
+    height: 4px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    z-index: 0;
+}
+
+.timeline-line-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-steps-row {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+}
+
+.step-point-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+    width: 80px;
+    /* Largeur fixe pour stabiliser l'alignement */
+}
+
+.step-marker {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #e0e0e0;
+    transition: all 0.4s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.step-marker.active {
+    transform: scale(1.15);
+    box-shadow: 0 0 20px var(--active-color);
+}
+
+.active-dot {
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+    animation: activeInnerPulse 1.5s infinite;
+}
+
+@keyframes activeInnerPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(0.7);
+    }
+}
+
+.future-dot {
+    width: 6px;
+    height: 6px;
+    background: #e0e0e0;
+    border-radius: 50%;
+}
+
+.step-label-v3 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-light);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.step-label-v3.active {
+    color: var(--text);
+}

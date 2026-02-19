@@ -107,39 +107,44 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
                     <ChevronLeft size={20} /> Retour à mes commandes
                 </Link>
 
-                {/* PROGRESS BAR */}
-                <div className="glovo-timeline glass">
-                    <div className="glovo-timeline-bar">
-                        <div
-                            className="glovo-timeline-fill"
-                            style={{
-                                width: `${currentStepIndex >= 0 ? (currentStepIndex / (steps.length - 1)) * 100 : 0}%`
-                            }}
-                        ></div>
-                    </div>
-                    <div className="glovo-timeline-steps">
-                        {steps.map((step, index) => {
-                            const isActive = index === currentStepIndex;
-                            const isCompleted = index < currentStepIndex;
+                {/* PROGRESS BAR - GEOMETRIC ALIGNMENT STYLE */}
+                <div className="modern-tracking-timeline glass">
+                    <div className="timeline-connector-wrapper">
+                        {/* The Actual Line */}
+                        <div className="timeline-line-base">
+                            <div
+                                className="timeline-line-fill"
+                                style={{
+                                    width: `${currentStepIndex >= 0 ? (currentStepIndex / (steps.length - 1)) * 100 : 0}%`,
+                                    background: currentStepIndex >= 0 ? steps[currentStepIndex].color : '#ddd'
+                                }}
+                            ></div>
+                        </div>
 
-                            return (
-                                <div
-                                    key={step.id}
-                                    className={`glovo-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
-                                >
-                                    <div
-                                        className="glovo-step-circle"
-                                        style={{
-                                            background: isActive || isCompleted ? step.color : '#e0e0e0',
-                                            borderColor: isActive || isCompleted ? step.color : '#e0e0e0'
-                                        }}
-                                    >
-                                        {isCompleted ? <Check size={14} color="white" /> : step.icon}
+                        {/* The Steps (Circles only for alignment) */}
+                        <div className="timeline-steps-row">
+                            {steps.map((step, index) => {
+                                const isActive = index === currentStepIndex;
+                                const isCompleted = index < currentStepIndex;
+                                return (
+                                    <div key={step.id} className="step-point-container">
+                                        <div
+                                            className={`step-marker ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
+                                            style={{
+                                                '--active-color': step.color,
+                                                backgroundColor: isActive || isCompleted ? step.color : '#fff',
+                                                borderColor: isActive || isCompleted ? step.color : '#e0e0e0'
+                                            } as any}
+                                        >
+                                            {isCompleted ? <Check size={14} color="white" strokeWidth={3} /> :
+                                                isActive ? <div className="active-dot"></div> :
+                                                    <div className="future-dot"></div>}
+                                        </div>
+                                        <span className={`step-label-v3 ${isActive ? 'active' : ''}`}>{step.label}</span>
                                     </div>
-                                    <span className="glovo-step-label">{step.label}</span>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
 
@@ -150,7 +155,11 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
                         {status === 'en-attente' && (
                             <div className="glovo-status-card received-card glass" key="en-attente">
                                 <div className="status-card-header">
-                                    <div className="status-emoji-anim" style={{ color: '#D4AF37' }}><Package size={36} /></div>
+                                    <div className="status-emoji-anim" style={{ color: '#D4AF37' }}>
+                                        <div className="premium-icon-wrapper gold">
+                                            <Package size={36} />
+                                        </div>
+                                    </div>
                                     <div>
                                         <h2>Commande bien reçue !</h2>
                                         <p className="status-subtitle">En attente de validation par notre équipe</p>
@@ -168,7 +177,11 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
                         {status === 'validee' && (
                             <div className="glovo-status-card validated-card glass" key="validee">
                                 <div className="status-card-header">
-                                    <div className="status-emoji-anim validated-pop" style={{ color: '#27AE60' }}><CheckCircle2 size={36} /></div>
+                                    <div className="status-emoji-anim validated-pop" style={{ color: '#27AE60' }}>
+                                        <div className="premium-icon-wrapper green">
+                                            <CheckCircle2 size={36} />
+                                        </div>
+                                    </div>
                                     <div>
                                         <h2>C&apos;est validé !</h2>
                                         <p className="status-subtitle">Votre commande passe en production</p>
@@ -189,7 +202,11 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
                         {status === 'en-production' && (
                             <div className="glovo-status-card production-card glass" key="en-production">
                                 <div className="status-card-header">
-                                    <div className="status-emoji-anim cooking-anim" style={{ color: '#E67E22' }}><Flame size={36} /></div>
+                                    <div className="status-emoji-anim cooking-anim" style={{ color: '#E67E22' }}>
+                                        <div className="premium-icon-wrapper orange">
+                                            <Flame size={36} />
+                                        </div>
+                                    </div>
                                     <div>
                                         <h2>Cuisson Artisanale</h2>
                                         <p className="status-subtitle">Préparation traditionnelle à Molonoublé</p>
