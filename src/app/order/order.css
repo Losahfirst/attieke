@@ -227,3 +227,30 @@
         transform: scale(1) rotate(0deg);
     }
 }
+
+/* Login prompt */
+.login-prompt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 1rem 1.5rem;
+    background: #fff9e6;
+    border: 1px solid #ffeeba;
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: #856404;
+    flex-wrap: wrap;
+}
+
+.full-width:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.help-text {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 0.3rem;
+}

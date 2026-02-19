@@ -2,7 +2,8 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { ChevronLeft, Star, User, Package, CheckCircle2, Clock, Check, Phone, Truck, Plane, Bike, MapPin, Flame } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { ChevronLeft, Star, Package, CheckCircle2, Clock, Check, Phone, Truck, Plane, Bike, MapPin, Flame, Loader2 } from 'lucide-react';
 import '../../dashboard.css';
 
 const OSMMap = dynamic(() => import('@/components/OSMTrackingMap'), {
@@ -13,7 +14,7 @@ const OSMMap = dynamic(() => import('@/components/OSMTrackingMap'), {
 export default function Tracking({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const [status, setStatus] = useState('en-attente');
-    const [prevStatus, setPrevStatus] = useState('');
+    const [loading, setLoading] = useState(true);
     const [orderInfo, setOrderInfo] = useState({
         city: 'Bouaké',
         country: 'Côte d\'Ivoire',
@@ -22,30 +23,53 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
     });
 
     useEffect(() => {
-        const syncData = () => {
-            const savedOrders = localStorage.getItem('simulated_orders');
-            if (savedOrders) {
-                const list = JSON.parse(savedOrders);
-                const order = list.find((o: any) => o.id === id);
-                if (order) {
-                    if (order.status !== status) {
-                        setPrevStatus(status);
-                    }
-                    setStatus(order.status);
-                    setOrderInfo({
-                        city: order.city || 'Bouaké',
-                        country: order.country || 'Côte d\'Ivoire',
-                        client: order.client || 'Client',
-                        amount: order.amount || '0 F'
-                    });
-                }
+        const fetchOrder = async () => {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (!error && data) {
+                setStatus(data.status);
+                setOrderInfo({
+                    city: data.city || 'Bouaké',
+                    country: data.country || 'Côte d\'Ivoire',
+                    client: data.client_name || 'Client',
+                    amount: `${data.total?.toLocaleString() || 0} F`
+                });
             }
+            setLoading(false);
         };
 
-        syncData();
-        const interval = setInterval(syncData, 1500);
-        return () => clearInterval(interval);
-    }, [id, status]);
+        fetchOrder();
+
+        // Real-time subscription
+        const channel = supabase
+            .channel(`order-${id}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'orders',
+                    filter: `id=eq.${id}`
+                },
+                (payload) => {
+                    const updated = payload.new as any;
+                    setStatus(updated.status);
+                    setOrderInfo({
+                        city: updated.city || 'Bouaké',
+                        country: updated.country || 'Côte d\'Ivoire',
+                        client: updated.client_name || 'Client',
+                        amount: `${updated.total?.toLocaleString() || 0} F`
+                    });
+                }
+            )
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [id]);
 
     const steps = [
         { label: 'Reçue', id: 'en-attente', icon: <Package size={16} />, color: '#D4AF37' },
@@ -68,6 +92,14 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
 
     const transport = getTransportInfo();
 
+    if (loading) {
+        return (
+            <div className="dashboard-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                <Loader2 size={40} className="spin" color="var(--primary)" />
+            </div>
+        );
+    }
+
     return (
         <div className="dashboard-container">
             <div className="container">
@@ -75,7 +107,7 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
                     <ChevronLeft size={20} /> Retour à mes commandes
                 </Link>
 
-                {/* ═══ GLOVO-STYLE PROGRESS BAR ═══ */}
+                {/* PROGRESS BAR */}
                 <div className="glovo-timeline glass">
                     <div className="glovo-timeline-bar">
                         <div
@@ -115,7 +147,6 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
                     {/* LEFT: STATUS CONTENT */}
                     <div className="status-content-area">
 
-                        {/* ═══ STATUS CARDS WITH UNIQUE ANIMATIONS ═══ */}
                         {status === 'en-attente' && (
                             <div className="glovo-status-card received-card glass" key="en-attente">
                                 <div className="status-card-header">
@@ -126,7 +157,7 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
                                     </div>
                                 </div>
                                 <div className="status-card-body">
-                                    <p>Votre commande de <strong>{orderInfo.amount}</strong> vers <strong>{orderInfo.city}</strong> est en file d'attente.</p>
+                                    <p>Votre commande de <strong>{orderInfo.amount}</strong> vers <strong>{orderInfo.city}</strong> est en file d&apos;attente.</p>
                                     <div className="waiting-dots">
                                         <span></span><span></span><span></span>
                                     </div>
@@ -139,7 +170,7 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
                                 <div className="status-card-header">
                                     <div className="status-emoji-anim validated-pop" style={{ color: '#27AE60' }}><CheckCircle2 size={36} /></div>
                                     <div>
-                                        <h2>C'est validé !</h2>
+                                        <h2>C&apos;est validé !</h2>
                                         <p className="status-subtitle">Votre commande passe en production</p>
                                     </div>
                                 </div>
@@ -230,9 +261,9 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
                                     </div>
                                 </div>
                                 <div className="status-card-body">
-                                    <p>Merci d'avoir soutenu les producteurs de Molonoublé !</p>
+                                    <p>Merci d&apos;avoir soutenu les producteurs de Molonoublé !</p>
                                     <div className="rating-glovo">
-                                        <p>Comment s'est passée la livraison ?</p>
+                                        <p>Comment s&apos;est passée la livraison ?</p>
                                         <div className="rating-emojis">
                                             {[1, 2, 3, 4, 5].map((n) => (
                                                 <button key={n} className={`rating-btn ${n === 5 ? 'active' : ''}`}>
@@ -245,11 +276,11 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
                             </div>
                         )}
 
-                        {/* ═══ ORDER CONTEXT INFO ═══ */}
+                        {/* ORDER CONTEXT INFO */}
                         <div className="order-context-box glass">
                             <div className="context-item">
                                 <span className="label">Référence</span>
-                                <span className="value">#{id}</span>
+                                <span className="value">#{id.slice(0, 8)}</span>
                             </div>
                             <div className="context-item">
                                 <span className="label">Destination</span>
@@ -266,7 +297,7 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
                         </div>
                     </div>
 
-                    {/* RIGHT: MAP WITH ANIMATIONS */}
+                    {/* RIGHT: MAP */}
                     <div className="tracking-map-container glass">
                         <OSMMap
                             status={status}

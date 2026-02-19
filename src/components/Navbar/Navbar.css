@@ -80,3 +80,34 @@
     background: var(--primary);
     transform: translateY(-2px);
 }
+
+.nav-logout-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-light);
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+}
+
+.nav-logout-btn:hover {
+    color: var(--error);
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.nav-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary);
+}
+
+.user-profile-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}

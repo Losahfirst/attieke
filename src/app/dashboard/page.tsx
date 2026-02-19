@@ -2,29 +2,113 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Clock, ChevronRight, Plus, User, HelpCircle, Star, MessageSquare, Package, CheckCircle2, Truck, MapPin, XCircle, Bike, Plane } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { ShoppingBag, ChevronRight, Plus, User, HelpCircle, Star, MessageSquare, Package, MapPin, Loader2 } from 'lucide-react';
 import './dashboard.css';
 
-export default function Dashboard() {
-    const [orders, setOrders] = useState([
-        { id: 'CMD-8492', date: '19/02/2026', amount: '4,500 F', status: 'en-attente', address: 'Abidjan, Cocody', country: 'Côte d\'Ivoire', city: 'Abidjan' },
-        { id: 'CMD-8411', date: '18/02/2026', amount: '850 F', status: 'en-attente', address: 'Bouake, Air France', country: 'Côte d\'Ivoire', city: 'Bouaké' },
-        { id: 'CMD-8395', date: '15/02/2026', amount: '2,500 F', status: 'en-attente', address: 'Paris, 16ème', country: 'France', city: 'Paris' },
-        { id: 'CMD-8350', date: '12/02/2026', amount: '1,500 F', status: 'en-attente', address: 'Yopougon Selmer', country: 'Côte d\'Ivoire', city: 'Abidjan' },
-    ]);
+interface Order {
+    id: string;
+    created_at: string;
+    amount: number;
+    total: number;
+    delivery_fee: number;
+    status: string;
+    address: string;
+    country: string;
+    city: string;
+    attieke_type: string;
+}
 
-    // Poll localStorage every 2 seconds for real-time sync
+export default function Dashboard() {
+    const { user, profile, loading: authLoading } = useAuth();
+    const router = useRouter();
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loadingOrders, setLoadingOrders] = useState(true);
+    const [activeTab, setActiveTab] = useState('commandes');
+    const { updateProfile } = useAuth();
+
+    // Profile Edit State
+    const [editData, setEditData] = useState({
+        full_name: '',
+        phone: '',
+        default_address: ''
+    });
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [updateMsg, setUpdateMsg] = useState({ type: '', text: '' });
+
     useEffect(() => {
-        const sync = () => {
-            const saved = localStorage.getItem('simulated_orders');
-            if (saved) {
-                setOrders(JSON.parse(saved));
+        if (profile) {
+            setEditData({
+                full_name: profile.full_name || '',
+                phone: profile.phone || '',
+                default_address: profile.default_address || ''
+            });
+        }
+    }, [profile]);
+
+    const handleUpdateProfile = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsUpdating(true);
+        setUpdateMsg({ type: '', text: '' });
+
+        const { error } = await updateProfile(editData);
+        if (error) {
+            setUpdateMsg({ type: 'error', text: 'Erreur lors de la mise à jour.' });
+        } else {
+            setUpdateMsg({ type: 'success', text: 'Profil mis à jour avec succès !' });
+        }
+        setIsUpdating(false);
+    };
+
+
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push('/login');
+        }
+    }, [authLoading, user, router]);
+
+    // Fetch orders from Supabase
+    useEffect(() => {
+        if (!user) return;
+
+        const fetchOrders = async () => {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+
+            if (!error && data) {
+                setOrders(data);
             }
+            setLoadingOrders(false);
         };
-        sync();
-        const interval = setInterval(sync, 2000);
-        return () => clearInterval(interval);
-    }, []);
+
+        fetchOrders();
+
+        // Real-time subscription
+        const channel = supabase
+            .channel('orders-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'orders',
+                    filter: `user_id=eq.${user.id}`
+                },
+                () => {
+                    fetchOrders();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user]);
 
     const getStatusLabel = (status: string) => {
         switch (status) {
@@ -50,10 +134,23 @@ export default function Dashboard() {
         }
     };
 
-    const [activeTab, setActiveTab] = useState('commandes');
+    const formatDate = (dateStr: string) => {
+        return new Date(dateStr).toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
 
     const activeOrders = orders.filter(o => !['livree', 'annulee'].includes(o.status));
-    const pastOrders = orders.filter(o => ['livree', 'annulee'].includes(o.status));
+
+    if (authLoading) {
+        return (
+            <div className="dashboard-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                <Loader2 size={40} className="spin" color="var(--primary)" />
+            </div>
+        );
+    }
 
     return (
         <div className="dashboard-container">
@@ -68,6 +165,26 @@ export default function Dashboard() {
                         Nouvelle commande
                     </Link>
                 </div>
+
+                {user && (!profile?.phone || !profile?.default_address) && (
+                    <div className="info-box glass" style={{ marginBottom: '2rem', borderLeft: '4px solid #f1c40f', background: 'rgba(241, 196, 15, 0.05)', padding: '1rem' }}>
+                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                            <HelpCircle color="#f1c40f" size={24} />
+                            <div style={{ flex: 1 }}>
+                                <h4 style={{ margin: 0, color: '#9a7d0a' }}>Profil incomplet</h4>
+                                <p style={{ margin: '5px 0 0 0', fontSize: '0.9rem', color: 'var(--text-light)' }}>Complétez vos infos pour commander plus rapidement.</p>
+                            </div>
+                            <button
+                                onClick={() => setActiveTab('profil')}
+                                className="outline-btn"
+                                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', width: 'auto' }}
+                            >
+                                Compléter
+                            </button>
+                        </div>
+                    </div>
+                )}
+
 
                 <div className="dashboard-grid">
                     <div className="dashboard-main-content">
@@ -87,112 +204,170 @@ export default function Dashboard() {
                         </div>
 
                         {activeTab === 'commandes' && (<>
-                            {/* ACTIVE ORDERS — with live animation */}
-                            {activeOrders.length > 0 && (
-                                <div className="active-orders-section">
-                                    <h3 className="section-title">
-                                        <div className="live-dot"></div>
-                                        Commandes en cours
-                                    </h3>
-                                    <div className="active-order-cards">
-                                        {activeOrders.map((order) => (
-                                            <Link href={`/dashboard/tracking/${order.id}`} key={order.id} className="active-order-card glass">
-                                                <div className="aoc-header">
-                                                    <strong>#{order.id}</strong>
-                                                    <span
-                                                        className="aoc-status-pill"
-                                                        style={{ background: `${getStatusColor(order.status)}15`, color: getStatusColor(order.status) }}
-                                                    >
-                                                        {getStatusLabel(order.status)}
-                                                    </span>
-                                                </div>
-                                                <div className="aoc-body">
-                                                    <div className="aoc-info">
-                                                        <MapPin size={14} /> {order.city}, {order.country}
-                                                    </div>
-                                                    <div className="aoc-info">
-                                                        <Package size={14} /> {order.amount}
-                                                    </div>
-                                                </div>
-                                                {/* Mini progress */}
-                                                <div className="aoc-progress">
-                                                    {['en-attente', 'validee', 'en-production', 'en-livraison', 'livree'].map((s, i) => {
-                                                        const currentIdx = ['en-attente', 'validee', 'en-production', 'en-livraison', 'livree'].indexOf(order.status);
-                                                        return (
-                                                            <div key={s} className="aoc-prog-bar" style={{
-                                                                background: i <= currentIdx ? getStatusColor(order.status) : '#e8e8e8'
-                                                            }}></div>
-                                                        );
-                                                    })}
-                                                </div>
-                                                <div className="aoc-footer">
-                                                    <span className="aoc-cta">Suivre <ChevronRight size={14} /></span>
-                                                </div>
-                                            </Link>
-                                        ))}
-                                    </div>
+                            {loadingOrders ? (
+                                <div style={{ textAlign: 'center', padding: '3rem' }}>
+                                    <Loader2 size={32} className="spin" color="var(--primary)" />
+                                    <p style={{ marginTop: '1rem', color: 'var(--text-light)' }}>Chargement des commandes...</p>
                                 </div>
-                            )}
-
-                            {/* ALL ORDERS TABLE */}
-                            <h3 className="section-title" style={{ marginTop: '2rem' }}>Toutes les commandes</h3>
-                            <div className="orders-table-container">
-                                <table className="orders-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Référence</th>
-                                            <th>Date</th>
-                                            <th>Montant</th>
-                                            <th>Statut</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {orders.map((order) => (
-                                            <tr key={order.id}>
-                                                <td data-label="Référence"><strong>{order.id}</strong></td>
-                                                <td data-label="Date">{order.date || '19/02/2026'}</td>
-                                                <td data-label="Montant">{order.amount}</td>
-                                                <td data-label="Statut">
-                                                    <span
-                                                        className="status-badge-dynamic"
-                                                        style={{ background: `${getStatusColor(order.status)}15`, color: getStatusColor(order.status) }}
-                                                    >
-                                                        {getStatusLabel(order.status)}
-                                                    </span>
-                                                </td>
-                                                <td style={{ textAlign: 'right' }}>
-                                                    <Link href={`/dashboard/tracking/${order.id}`} className="view-btn">
-                                                        Détails <ChevronRight size={16} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                            ) : (
+                                <>
+                                    {/* ACTIVE ORDERS */}
+                                    {activeOrders.length > 0 && (
+                                        <div className="active-orders-section">
+                                            <h3 className="section-title">
+                                                <div className="live-dot"></div>
+                                                Commandes en cours
+                                            </h3>
+                                            <div className="active-order-cards">
+                                                {activeOrders.map((order) => (
+                                                    <Link href={`/dashboard/tracking/${order.id}`} key={order.id} className="active-order-card glass">
+                                                        <div className="aoc-header">
+                                                            <strong>#{order.id.slice(0, 8)}</strong>
+                                                            <span
+                                                                className="aoc-status-pill"
+                                                                style={{ background: `${getStatusColor(order.status)}15`, color: getStatusColor(order.status) }}
+                                                            >
+                                                                {getStatusLabel(order.status)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="aoc-body">
+                                                            <div className="aoc-info">
+                                                                <MapPin size={14} /> {order.city}, {order.country}
+                                                            </div>
+                                                            <div className="aoc-info">
+                                                                <Package size={14} /> {order.total.toLocaleString()} F CFA
+                                                            </div>
+                                                        </div>
+                                                        <div className="aoc-progress">
+                                                            {['en-attente', 'validee', 'en-production', 'en-livraison', 'livree'].map((s, i) => {
+                                                                const currentIdx = ['en-attente', 'validee', 'en-production', 'en-livraison', 'livree'].indexOf(order.status);
+                                                                return (
+                                                                    <div key={s} className="aoc-prog-bar" style={{
+                                                                        background: i <= currentIdx ? getStatusColor(order.status) : '#e8e8e8'
+                                                                    }}></div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                        <div className="aoc-footer">
+                                                            <span className="aoc-cta">Suivre <ChevronRight size={14} /></span>
+                                                        </div>
                                                     </Link>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* ALL ORDERS TABLE */}
+                                    <h3 className="section-title" style={{ marginTop: '2rem' }}>Toutes les commandes</h3>
+
+                                    {orders.length === 0 ? (
+                                        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)' }}>
+                                            <Package size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                                            <p>Aucune commande pour le moment.</p>
+                                            <Link href="/order" className="premium-btn" style={{ marginTop: '1rem', display: 'inline-block' }}>Passer ma première commande</Link>
+                                        </div>
+                                    ) : (
+                                        <div className="orders-table-container">
+                                            <table className="orders-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Référence</th>
+                                                        <th>Date</th>
+                                                        <th>Montant</th>
+                                                        <th>Statut</th>
+                                                        <th></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {orders.map((order) => (
+                                                        <tr key={order.id}>
+                                                            <td data-label="Référence"><strong>{order.id.slice(0, 8)}</strong></td>
+                                                            <td data-label="Date">{formatDate(order.created_at)}</td>
+                                                            <td data-label="Montant">{order.total.toLocaleString()} F</td>
+                                                            <td data-label="Statut">
+                                                                <span
+                                                                    className="status-badge-dynamic"
+                                                                    style={{ background: `${getStatusColor(order.status)}15`, color: getStatusColor(order.status) }}
+                                                                >
+                                                                    {getStatusLabel(order.status)}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{ textAlign: 'right' }}>
+                                                                <Link href={`/dashboard/tracking/${order.id}`} className="view-btn">
+                                                                    Détails <ChevronRight size={16} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                                                                </Link>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </>)}
 
                         {activeTab === 'profil' && (
                             <div className="tab-content-profil glass" style={{ padding: '2rem', borderRadius: '20px', background: 'white' }}>
-                                <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-                                    <User size={64} color="var(--primary)" style={{ marginBottom: '1rem' }} />
-                                    <h2 style={{ marginBottom: '0.5rem' }}>Mon Profil</h2>
-                                    <p style={{ color: 'var(--text-light)', marginBottom: '2rem' }}>Gérez vos informations personnelles et préférences de livraison.</p>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
-                                        <div style={{ padding: '1rem', background: 'var(--background)', borderRadius: '12px' }}>
-                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: 600 }}>Nom</span>
-                                            <p style={{ fontWeight: 700 }}>Client Attiéké</p>
-                                        </div>
-                                        <div style={{ padding: '1rem', background: 'var(--background)', borderRadius: '12px' }}>
-                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: 600 }}>Téléphone</span>
-                                            <p style={{ fontWeight: 700 }}>+225 07 07 07 07 07</p>
-                                        </div>
-                                        <div style={{ padding: '1rem', background: 'var(--background)', borderRadius: '12px' }}>
-                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: 600 }}>Adresse par défaut</span>
-                                            <p style={{ fontWeight: 700 }}>Bouaké, Côte d'Ivoire</p>
-                                        </div>
+                                <div style={{ textAlign: 'center', padding: '1rem' }}>
+                                    <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1.5rem' }}>
+                                        {profile?.avatar_url ? (
+                                            <img src={profile.avatar_url} alt="Profile" style={{ width: '100px', height: '100px', borderRadius: '50%', border: '4px solid var(--primary)', objectFit: 'cover' }} />
+                                        ) : (
+                                            <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'var(--background)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                <User size={48} color="var(--primary)" />
+                                            </div>
+                                        )}
                                     </div>
+                                    <h2 style={{ marginBottom: '0.5rem' }}>{profile?.full_name || 'Mon Profil'}</h2>
+                                    <p style={{ color: 'var(--text-light)', marginBottom: '2rem' }}>Gérez vos informations personnelles et préférences de livraison.</p>
+
+                                    <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
+                                        {updateMsg.text && (
+                                            <div style={{
+                                                padding: '0.8rem',
+                                                borderRadius: '8px',
+                                                fontSize: '0.9rem',
+                                                background: updateMsg.type === 'success' ? '#d4edda' : '#f8d7da',
+                                                color: updateMsg.type === 'success' ? '#155724' : '#721c24',
+                                                marginBottom: '1rem'
+                                            }}>
+                                                {updateMsg.text}
+                                            </div>
+                                        )}
+                                        <div className="form-group-profile">
+                                            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: 600, marginBottom: '5px' }}>Nom complet</label>
+                                            <input
+                                                type="text"
+                                                value={editData.full_name}
+                                                onChange={(e) => setEditData({ ...editData, full_name: e.target.value })}
+                                                style={{ width: '100%', padding: '0.8rem', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--background)' }}
+                                            />
+                                        </div>
+                                        <div className="form-group-profile">
+                                            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: 600, marginBottom: '5px' }}>Téléphone</label>
+                                            <input
+                                                type="tel"
+                                                placeholder="Ex: 07 00 00 00 00"
+                                                value={editData.phone}
+                                                onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                                                style={{ width: '100%', padding: '0.8rem', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--background)' }}
+                                            />
+                                        </div>
+                                        <div className="form-group-profile">
+                                            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: 600, marginBottom: '5px' }}>Adresse de livraison par défaut</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Commune, Quartier..."
+                                                value={editData.default_address}
+                                                onChange={(e) => setEditData({ ...editData, default_address: e.target.value })}
+                                                style={{ width: '100%', padding: '0.8rem', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--background)' }}
+                                            />
+                                        </div>
+                                        <button type="submit" className="premium-btn" disabled={isUpdating} style={{ marginTop: '1rem' }}>
+                                            {isUpdating ? <Loader2 className="spin" size={18} /> : 'Sauvegarder les modifications'}
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         )}
@@ -201,7 +376,7 @@ export default function Dashboard() {
                             <div className="tab-content-aide glass" style={{ padding: '2rem', borderRadius: '20px', background: 'white' }}>
                                 <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
                                     <HelpCircle size={64} color="var(--primary)" style={{ marginBottom: '1rem' }} />
-                                    <h2 style={{ marginBottom: '0.5rem' }}>Centre d'aide</h2>
+                                    <h2 style={{ marginBottom: '0.5rem' }}>Centre d&apos;aide</h2>
                                     <p style={{ color: 'var(--text-light)', marginBottom: '2rem' }}>Des questions ? Nous sommes là pour vous aider.</p>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px', margin: '0 auto' }}>
@@ -211,7 +386,7 @@ export default function Dashboard() {
                                     </div>
                                     <div style={{ padding: '1.2rem', background: 'var(--background)', borderRadius: '14px', cursor: 'pointer' }}>
                                         <h4 style={{ marginBottom: '0.3rem' }}>Quels sont les délais de livraison ?</h4>
-                                        <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>Bouaké : 30min-1h | Côte d'Ivoire : 24-48h | International : 3-5 jours</p>
+                                        <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>Bouaké : 30min-1h | Côte d&apos;Ivoire : 24-48h | International : 3-5 jours</p>
                                     </div>
                                     <div style={{ padding: '1.2rem', background: 'var(--background)', borderRadius: '14px', cursor: 'pointer' }}>
                                         <h4 style={{ marginBottom: '0.3rem' }}>Comment contacter le support ?</h4>
@@ -245,7 +420,7 @@ export default function Dashboard() {
 
                         <div className="info-box glass" style={{ marginTop: '2rem' }}>
                             <h4>Lieu de production</h4>
-                            <p><strong>Molonoublé</strong><br />Village de Bouaké, Côte d'Ivoire</p>
+                            <p><strong>Molonoublé</strong><br />Village de Bouaké, Côte d&apos;Ivoire</p>
                             <p className="help-text">Livraison gratuite sur tout Bouaké.</p>
                         </div>
                     </div>

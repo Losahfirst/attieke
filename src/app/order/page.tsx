@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Star, MapPin, Zap, Globe, Package, Landmark, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { Star, MapPin, Zap, Globe, Package, Landmark, CheckCircle2, LogIn, AlertCircle, X } from 'lucide-react';
+import Link from 'next/link';
 import './order.css';
 
 const countryData: Record<string, string[]> = {
@@ -38,37 +41,75 @@ const countryData: Record<string, string[]> = {
 
 export default function Order() {
     const router = useRouter();
+    const { user, profile, loading: authLoading } = useAuth();
     const countries = Object.keys(countryData);
     const [amount, setAmount] = useState('200');
+    const [attiekeType, setAttiekeType] = useState('simple');
     const [country, setCountry] = useState('Côte d\'Ivoire');
     const [city, setCity] = useState(countryData['Côte d\'Ivoire'][0]);
     const [deliveryFee, setDeliveryFee] = useState(0);
     const [address, setAddress] = useState('');
+    const [desiredDate, setDesiredDate] = useState('');
+    const [comment, setComment] = useState('');
+    const [customCity, setCustomCity] = useState('');
     const [orderPlaced, setOrderPlaced] = useState(false);
     const [placedOrderId, setPlacedOrderId] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [errorModal, setErrorModal] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
 
-    const handleSubmitOrder = (e: React.FormEvent) => {
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push('/login');
+        }
+    }, [authLoading, user, router]);
+
+    const handleSubmitOrder = async (e: React.FormEvent) => {
         e.preventDefault();
-        const orderId = `CMD-${Math.floor(1000 + Math.random() * 9000)}`;
-        const total = (parseInt(amount) + deliveryFee).toLocaleString();
-        const newOrder = {
-            id: orderId,
-            client: 'Vous',
-            tel: '',
-            amount: `${total} F`,
-            address: `${address || city}`,
-            country,
-            city,
-            status: 'en-attente',
-            date: new Date().toLocaleDateString('fr-FR')
-        };
 
-        const existing = localStorage.getItem('simulated_orders');
-        const orders = existing ? JSON.parse(existing) : [];
-        orders.unshift(newOrder);
-        localStorage.setItem('simulated_orders', JSON.stringify(orders));
-        setPlacedOrderId(orderId);
+        if (!user) {
+            router.push('/login');
+            return;
+        }
+
+        setSubmitting(true);
+
+        const finalCity = city === 'Autre' ? customCity : city;
+        const total = parseInt(amount) + deliveryFee;
+
+        const { data, error } = await supabase
+            .from('orders')
+            .insert({
+                user_id: user.id,
+                client_name: profile?.full_name || 'Client',
+                client_phone: profile?.phone || '',
+                client_email: user.email,
+                amount: parseInt(amount),
+                delivery_fee: deliveryFee,
+                total: total,
+                attieke_type: attiekeType,
+                country,
+                city: finalCity,
+                address: address || finalCity,
+                desired_date: desiredDate || null,
+                comment: comment || null,
+                status: 'en-attente'
+            })
+            .select()
+            .single();
+
+        if (error) {
+            setErrorModal({
+                show: true,
+                message: error.message || 'Erreur lors de la commande. Vérifiez si vous avez bien exécuté le script SQL dans Supabase.'
+            });
+            setSubmitting(false);
+            return;
+        }
+
+        setPlacedOrderId(data.id);
         setOrderPlaced(true);
+        setSubmitting(false);
     };
 
     const prices = [
@@ -76,7 +117,6 @@ export default function Order() {
     ];
 
     useEffect(() => {
-        // Update city when country changes
         setCity(countryData[country][0]);
     }, [country]);
 
@@ -84,16 +124,31 @@ export default function Order() {
         if (city.toLowerCase().includes('bouaké') || city.toLowerCase().includes('bouake')) {
             setDeliveryFee(0);
         } else if (city) {
-            // Default delivery fee logic
             if (country === 'Côte d\'Ivoire') {
                 setDeliveryFee(1000);
             } else if (['Sénégal', 'Mali', 'Burkina Faso', 'Bénin', 'Togo', 'Guinée'].includes(country)) {
                 setDeliveryFee(5000);
             } else {
-                setDeliveryFee(15000); // International (France, USA)
+                setDeliveryFee(15000);
             }
         }
     }, [city, country]);
+
+    // Pre-fill address from profile
+    useEffect(() => {
+        if (profile?.default_address && !address) {
+            setAddress(profile.default_address);
+        }
+    }, [profile]);
+
+    // Show loading while checking auth
+    if (authLoading || !user) {
+        return (
+            <div className="order-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                <div className="spin" style={{ width: '40px', height: '40px', border: '4px solid var(--border)', borderTopColor: 'var(--primary)', borderRadius: '50%' }}></div>
+            </div>
+        );
+    }
 
     return (
         <div className="order-page-container">
@@ -116,11 +171,37 @@ export default function Order() {
                     </div>
                 </div>
             )}
+
+            {errorModal.show && (
+                <div className="order-success-overlay" style={{ background: 'rgba(0,0,0,0.7)' }}>
+                    <div className="order-success-card" style={{ borderTop: '5px solid #e74c3c' }}>
+                        <div className="error-icon-anim" style={{ color: '#e74c3c', marginBottom: '1.5rem' }}>
+                            <AlertCircle size={80} />
+                        </div>
+                        <h2 style={{ color: '#e74c3c' }}>Zut ! Une erreur</h2>
+                        <p className="help-text" style={{ padding: '0 1rem' }}>{errorModal.message}</p>
+                        <div className="success-actions" style={{ marginTop: '2rem' }}>
+                            <button className="premium-btn" style={{ background: '#e74c3c', borderColor: '#e74c3c' }} onClick={() => setErrorModal({ show: false, message: '' })}>
+                                Reessayer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="container">
                 <div className="order-content">
                     <div className="order-form-card">
                         <h2>Passer une commande</h2>
                         <p className="subtitle">Lieu de production : <strong>Molonoublé (Village de bouaké)</strong></p>
+
+                        {!user && (
+                            <div className="login-prompt">
+                                <LogIn size={20} />
+                                <span>Vous devez être connecté pour commander.</span>
+                                <Link href="/login" className="premium-btn" style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem' }}>Se connecter</Link>
+                            </div>
+                        )}
 
                         <form className="order-form" onSubmit={handleSubmitOrder}>
                             <div className="form-row">
@@ -133,8 +214,8 @@ export default function Order() {
                                     </select>
                                 </div>
                                 <div className="form-group flex-1">
-                                    <label>Type d'attiéké</label>
-                                    <select required>
+                                    <label>Type d&apos;attiéké</label>
+                                    <select required value={attiekeType} onChange={(e) => setAttiekeType(e.target.value)}>
                                         <option value="simple">Attiéké Simple</option>
                                         <option value="abodjaman">Abodjaman</option>
                                         <option value="garba">Garba</option>
@@ -165,7 +246,7 @@ export default function Order() {
                             {city === 'Autre' && (
                                 <div className="form-group">
                                     <label>Précisez la ville</label>
-                                    <input type="text" placeholder="Entrez le nom de votre ville" required />
+                                    <input type="text" placeholder="Entrez le nom de votre ville" required value={customCity} onChange={(e) => setCustomCity(e.target.value)} />
                                 </div>
                             )}
 
@@ -189,12 +270,12 @@ export default function Order() {
 
                             <div className="form-group">
                                 <label>Date souhaitée</label>
-                                <input type="date" required />
+                                <input type="date" value={desiredDate} onChange={(e) => setDesiredDate(e.target.value)} />
                             </div>
 
                             <div className="form-group">
                                 <label>Commentaire ou Instructions</label>
-                                <textarea placeholder="Précisions sur la livraison, contact d'urgence, etc." rows={3}></textarea>
+                                <textarea placeholder="Précisions sur la livraison, contact d'urgence, etc." rows={3} value={comment} onChange={(e) => setComment(e.target.value)}></textarea>
                             </div>
 
                             <div className="order-summary glass">
@@ -212,7 +293,9 @@ export default function Order() {
                                 </div>
                             </div>
 
-                            <button type="submit" className="premium-btn full-width">Confirmer ma commande</button>
+                            <button type="submit" className="premium-btn full-width" disabled={!user || submitting}>
+                                {submitting ? 'Envoi en cours...' : 'Confirmer ma commande'}
+                            </button>
                         </form>
                     </div>
 
