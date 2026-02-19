@@ -45,8 +45,8 @@ export default function Home() {
           <div className={styles.processContent}>
             <div className={styles.processText}>
               <span className="highlight" style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.9rem' }}>Notre Savoir-Faire</span>
-              <h2>Un processus artisanal pour un goût authentique</h2>
-              <p>Chaque grain d'attiéké est préparé selon des méthodes ancestrales, garantissant une fraîcheur et une texture inégalées.</p>
+              <h2>Un processus artisanal à Molonoublé</h2>
+              <p>Chaque grain d'attiéké est préparé à <strong>Molonoublé (Bouaké)</strong> selon des méthodes ancestrales, garantissant une fraîcheur et une texture inégalées.</p>
 
               <div className={styles.processSteps}>
                 <div className={styles.processStep}>
@@ -89,21 +89,21 @@ export default function Home() {
                 <ShoppingCart size={40} color="var(--primary)" />
               </div>
               <h3>Je commande</h3>
-              <p>Choisissez votre type d'attiéké et le montant souhaité (à partir de 500F).</p>
+              <p>Choisissez votre type d'attiéké et le montant souhaité (à partir de 200F).</p>
             </div>
             <div className={styles.stepCard}>
               <div className={styles.iconWrapper}>
                 <CheckCircle size={40} color="var(--primary)" />
               </div>
               <h3>Validation</h3>
-              <p>Nous préparons votre commande avec le plus grand soin.</p>
+              <p>Nous préparons votre commande avec le plus grand soin à Bouaké.</p>
             </div>
             <div className={styles.stepCard}>
               <div className={styles.iconWrapper}>
                 <Truck size={40} color="var(--primary)" />
               </div>
               <h3>Livraison</h3>
-              <p>Recevez votre commande à l'adresse indiquée, rapidement.</p>
+              <p>Recevez votre commande rapidement (Gratuit à Bouaké !).</p>
             </div>
           </div>
         </div>
