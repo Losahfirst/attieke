@@ -1,0 +1,117 @@
+.authContainer {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--background) 0%, #E8F5E9 100%);
+}
+
+.authWrapper {
+    display: flex;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    width: 100%;
+    max-width: 1000px;
+    min-height: 600px;
+    box-shadow: var(--shadow);
+}
+
+.authImage {
+    flex: 1.2;
+    position: relative;
+}
+
+.authImage img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.imageOverlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.2) 60%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 3rem;
+    color: white;
+}
+
+.imageOverlay h3 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .authWrapper {
+        flex-direction: column;
+        max-width: 450px;
+    }
+
+    .authImage {
+        display: none;
+    }
+
+    .authCard {
+        padding: 2rem 1.5rem;
+    }
+}
+
+.authCard {
+    flex: 1;
+    padding: 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.authCard h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.formGroup {
+    margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.formGroup input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+.formGroup input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
+}
+
+.authBtn {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.authFooter {
+    margin-top: 2rem;
+    text-align: center;
+    color: var(--text-light);
+}
+
+.authFooter a {
+    color: var(--primary);
+    font-weight: 600;
+}

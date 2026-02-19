@@ -1,0 +1,82 @@
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 1rem 0;
+    transition: var(--transition);
+}
+
+.nav-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.logo-icon {
+    font-size: 2rem;
+}
+
+.highlight {
+    color: var(--primary);
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.nav-links a {
+    font-weight: 500;
+    color: var(--text);
+    transition: var(--transition);
+}
+
+.nav-links a:hover {
+    color: var(--primary);
+}
+
+.login-btn {
+    padding: 0.8rem 1.5rem;
+    border-radius: var(--radius);
+}
+
+.nav-links .premium-btn {
+    padding: 0.8rem 1.5rem;
+    box-shadow: none;
+}
+
+.logo-icon-svg {
+    color: var(--primary);
+}
+
+.nav-link-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.seller-btn {
+    background: var(--text);
+    color: white !important;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius);
+}
+
+.seller-btn:hover {
+    background: var(--primary);
+    transform: translateY(-2px);
+}
