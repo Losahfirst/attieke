@@ -15,7 +15,7 @@ declare global {
 
 export default function Login() {
     const router = useRouter();
-    const { signIn, signInWithIdToken } = useAuth();
+    const { signIn, signInWithIdToken, signInWithGoogle } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -43,21 +43,33 @@ export default function Login() {
         };
 
         if (window.google) {
-            window.google.accounts.id.initialize({
-                client_id: "55615937047-o8esffj05qo85v6thndq66661bna0r1d.apps.googleusercontent.com",
-                callback: handleCredentialResponse,
-                auto_select: false,
-                cancel_on_tap_outside: true,
-            });
+            try {
+                window.google.accounts.id.initialize({
+                    client_id: "55615937047-o8esffj05qo85v6thndq66661bna0r1d.apps.googleusercontent.com",
+                    callback: handleCredentialResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: true,
+                });
 
-            window.google.accounts.id.renderButton(
-                document.getElementById("googleSignInButton"),
-                { theme: "outline", size: "large", width: "100%", text: "continue_with", shape: "rectangular" }
-            );
-
-            // window.google.accounts.id.prompt(); // One tap
+                window.google.accounts.id.renderButton(
+                    document.getElementById("googleSignInButton"),
+                    { theme: "outline", size: "large", width: "100%", text: "continue_with", shape: "rectangular" }
+                );
+            } catch (err) {
+                console.error("Google GIS initialization failed:", err);
+            }
         }
     }, [signInWithIdToken, router]);
+
+    const handleGoogleOAuth = async () => {
+        setLoading(true);
+        try {
+            await signInWithGoogle();
+        } catch (err: any) {
+            setError(err.message || "Erreur de connexion Google");
+            setLoading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -139,7 +151,17 @@ export default function Login() {
                         <span>ou</span>
                     </div>
 
-                    <div id="googleSignInButton" style={{ width: '100%' }}></div>
+                    <div id="googleSignInButton" style={{ width: '100%', marginBottom: '10px' }}></div>
+
+                    <button
+                        type="button"
+                        className="googleOAuthBtn"
+                        onClick={handleGoogleOAuth}
+                        disabled={loading}
+                    >
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="18" height="18" />
+                        Alternative Google Login
+                    </button>
 
                     <p className="authFooter">
                         Pas encore de compte ? <Link href="/signup">S&apos;inscrire</Link>
