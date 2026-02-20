@@ -1,0 +1,139 @@
+.splash {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #0f1912;
+    transition: opacity 0.5s ease;
+    overflow: hidden;
+}
+
+.splash--out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Subtle textured background using the site colors */
+.splash__bg {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 10%, rgba(212, 175, 55, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 90%, rgba(46, 125, 50, 0.15) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+/* Center block */
+.splash__body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    z-index: 1;
+    animation: splashFadeUp 0.6s ease both;
+}
+
+.splash__icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 24px;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1.5px solid rgba(212, 175, 55, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    animation: splashIconPulse 2s ease-in-out infinite;
+}
+
+@keyframes splashIconPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.15);
+    }
+
+    50% {
+        box-shadow: 0 0 0 16px rgba(212, 175, 55, 0);
+    }
+}
+
+.splash__name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.splash__tagline {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--primary, #D4AF37);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+/* Bottom bar */
+.splash__footer {
+    position: absolute;
+    bottom: 3rem;
+    left: 2rem;
+    right: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    z-index: 1;
+}
+
+.splash__bar {
+    width: 100%;
+    max-width: 160px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.splash__bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #D4AF37, #2E7D32);
+    border-radius: 2px;
+    animation: splashBarGrow 2.5s ease forwards;
+}
+
+@keyframes splashBarGrow {
+    from {
+        width: 0%;
+    }
+
+    to {
+        width: 100%;
+    }
+}
+
+.splash__origin {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+@keyframes splashFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

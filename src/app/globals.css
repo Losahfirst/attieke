@@ -1,40 +1,11 @@
-@media (max-width: 768px) {
-  h1 {
-    font-size: 2.2rem !important;
-  }
-
-  h2 {
-    font-size: 1.8rem !important;
-  }
-
-  .container {
-    padding: 0 1.2rem;
-  }
-}
-
-.mobile-only {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mobile-only {
-    display: block;
-  }
-
-  .desktop-only {
-    display: none;
-  }
-}
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
   --primary: #D4AF37;
-  /* Golden Yellow */
   --primary-dark: #B8860B;
   --secondary: #2E7D32;
-  /* Natural Green */
   --secondary-light: #4CAF50;
   --background: #FAFAFA;
-  /* Off-white */
   --surface: #FFFFFF;
   --text: #2C3E50;
   --text-light: #7F8C8D;
@@ -44,12 +15,18 @@
   --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   --radius: 12px;
   --transition: all 0.3s ease;
+  --bottom-nav-height: 70px;
 }
 
 * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 html,
@@ -105,6 +82,7 @@ h6 {
   font-weight: 600;
   display: inline-block;
   box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  transition: var(--transition);
 }
 
 .premium-btn:hover {
@@ -119,6 +97,8 @@ h6 {
   padding: 0.8rem 2rem;
   border-radius: var(--radius);
   font-weight: 600;
+  display: inline-block;
+  transition: var(--transition);
 }
 
 .outline-btn:hover {
@@ -132,4 +112,162 @@ h6 {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* MOBILE scrolling fix : add padding bottom so content is not hidden behind bottom nav */
+.main-content {
+  min-height: 100vh;
+}
+
+.mobile-only {
+  display: none;
+}
+
+.desktop-only {
+  display: block;
+}
+
+/* ==============================
+   MOBILE STYLES
+   ============================== */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  h1 {
+    font-size: 2rem !important;
+  }
+
+  h2 {
+    font-size: 1.6rem !important;
+  }
+
+  /* Add padding at bottom so content doesn't hide behind bottom nav */
+  .main-content {
+    padding-bottom: var(--bottom-nav-height);
+  }
+
+  /* Hide desktop navbar links on mobile - keep only logo */
+  .nav-links {
+    display: none !important;
+  }
+
+  /* Navbar becomes minimal top bar on mobile */
+  .navbar {
+    padding: 0.6rem 1rem !important;
+  }
+
+  .nav-content {
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+
+  .logo-text {
+    font-size: 1.1rem !important;
+  }
+
+  .mobile-only {
+    display: block;
+  }
+
+  .desktop-only {
+    display: none;
+  }
+
+  /* Buttons full width on mobile */
+  .premium-btn,
+  .outline-btn {
+    padding: 0.9rem 1.5rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* Spin animation for loaders */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Safe area support for notched phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  @media (max-width: 768px) {
+    .main-content {
+      padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* ═══════════════════════════════════════
+   DARK MODE SYSTÈME — toutes pages
+   S'active uniquement si le téléphone
+   est en mode sombre
+═══════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #111714;
+    --surface: #1a2118;
+    --text: #f0f0f0;
+    --text-light: rgba(255, 255, 255, 0.45);
+    --border: rgba(255, 255, 255, 0.08);
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  html,
+  body {
+    background-color: var(--background);
+    color: var(--text);
+  }
+
+  /* Cards and surfaces */
+  .glass {
+    background: rgba(26, 33, 24, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* Navbar on dark */
+  .navbar {
+    background: rgba(17, 23, 20, 0.95) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  /* White cards become dark */
+  .order-form-card,
+  .dashboard-container,
+  .orders-table-container,
+  .info-card,
+  .tracking-card {
+    background: var(--surface) !important;
+    color: var(--text) !important;
+  }
+
+  /* Tables */
+  .orders-table th {
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: var(--text-light) !important;
+  }
+
+  .orders-table td {
+    border-top-color: var(--border) !important;
+  }
+
+  /* Inputs */
+  input,
+  select,
+  textarea {
+    background: #1a2118 !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Bottom nav dark */
+  .bottom-nav {
+    background: rgba(17, 23, 20, 0.95) !important;
+    border-top-color: rgba(255, 255, 255, 0.06) !important;
+  }
 }

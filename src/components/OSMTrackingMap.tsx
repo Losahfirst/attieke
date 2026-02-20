@@ -302,7 +302,7 @@ const OSMTrackingMap = ({ status, city, country }: MapProps) => {
     const mapZoom = getMapZoom();
 
     return (
-        <div className="map-wrapper-glovo" style={{ height: '100%', width: '100%', position: 'relative', overflow: 'hidden', borderRadius: '24px' }}>
+        <div className="map-wrapper-glovo">
 
             {status !== 'en-livraison' && status !== 'livree' && (
                 <div className="map-status-overlay">
@@ -352,7 +352,7 @@ const OSMTrackingMap = ({ status, city, country }: MapProps) => {
                 <MapRecenter center={mapCenter} zoom={mapZoom} />
 
                 <TileLayer
-                    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
                 {status === 'en-attente' && (
@@ -443,6 +443,34 @@ const OSMTrackingMap = ({ status, city, country }: MapProps) => {
             )}
 
             <style jsx global>{`
+                .map-wrapper-glovo {
+                    height: 100%;
+                    width: 100%;
+                    position: relative;
+                    overflow: hidden;
+                    border-radius: 24px;
+                }
+
+                @media (max-width: 768px) {
+                    .map-wrapper-glovo {
+                        border-radius: 0 !important;
+                    }
+                    
+                    .glovo-badge {
+                        top: auto !important;
+                        bottom: 16px !important;
+                        left: 10px !important;
+                        right: 10px !important;
+                        width: auto !important;
+                        min-width: 0 !important;
+                    }
+                    
+                    .glovo-dot {
+                        top: 14px !important;
+                        right: 14px !important;
+                    }
+                }
+
                 .custom-leaflet-icon { background: transparent !important; border: none !important; }
 
                 .anim-marker { position: relative; display: flex; align-items: center; justify-content: center; }
