@@ -3,19 +3,16 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-    if (typeof window !== 'undefined') {
-        console.error(
-            '❌ Variables Supabase manquantes !\n' +
-            'Ajoutez NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY\n' +
-            'dans les Environment Variables de votre projet Vercel.'
-        );
+// Debug log pour aider à diagnostiquer sur Vercel
+if (typeof window !== 'undefined') {
+    if (!supabaseUrl || !supabaseAnonKey) {
+        console.warn('⚠️ Supabase config missing from browser environment variables');
     }
 }
 
 export const supabase = createClient(
-    supabaseUrl ?? 'https://placeholder.supabase.co',
-    supabaseAnonKey ?? 'placeholder',
+    supabaseUrl || 'https://missing-url.supabase.co',
+    supabaseAnonKey || 'missing-key',
     {
         auth: {
             persistSession: true,
@@ -24,7 +21,8 @@ export const supabase = createClient(
             storageKey: 'attieke-express-auth'
         },
         global: {
-            fetch: (...args) => fetch(...args)
+            // Désactiver le cache pour éviter les erreurs de fetch en prod lors des changements de DNS/Variables
+            fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' })
         }
     }
 );
