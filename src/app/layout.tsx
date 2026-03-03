@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar/Navbar";
 import BottomNav from "@/components/BottomNav";
-import SplashScreen from "@/components/SplashScreen";
 import { Providers } from "@/components/Providers";
 import Script from 'next/script';
 
@@ -34,7 +33,6 @@ export default function RootLayout({
     <html lang="fr">
       <body suppressHydrationWarning>
         <Providers>
-          <SplashScreen />
           <Navbar />
           <main className="main-content">{children}</main>
           <BottomNav />
