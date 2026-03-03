@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react';
 import React from 'react';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/context/AuthContext';
-import { Package, Check, Phone, MapPin, Globe, ChevronRight, Truck, Bike, Plane, Clock, CheckCircle2, X, Loader2, AlertCircle } from 'lucide-react';
-import '../../dashboard/dashboard.css';
+import { Package, Check, Phone, MapPin, Globe, ChevronRight, Truck, Bike, Plane, Clock, CheckCircle2, X, Loader2, Search } from 'lucide-react';
+import '../admin.css';
 
 const statusFlow = [
     { value: 'en-attente', label: 'Reçue', color: '#D4AF37', iconName: 'package' },
@@ -47,35 +46,19 @@ export default function AdminOrders() {
     const [loading, setLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
     const [notification, setNotification] = useState<{ text: string; type: string } | null>(null);
-
-    const { profile, loading: authLoading } = useAuth();
-
-    // Check admin auth
-    useEffect(() => {
-        if (!authLoading) {
-            const hasAdminPass = typeof window !== 'undefined' && sessionStorage.getItem('admin_auth') === 'true';
-            const isSupabaseAdmin = profile?.role === 'admin';
-
-            if (!hasAdminPass && !isSupabaseAdmin) {
-                window.location.href = '/admin';
-            }
-        }
-    }, [profile, authLoading]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Fetch all orders
     const fetchOrders = async () => {
         setLoading(true);
-        console.log('Fetching orders...');
         const { data, error } = await supabase
             .from('orders')
             .select('*')
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('Erreur Supabase Orders:', error);
             showNotification(`Erreur chargement: ${error.message}`, 'error');
         } else if (data) {
-            console.log('Orders data received:', data);
             setOrders(data);
         }
         setLoading(false);
@@ -83,15 +66,10 @@ export default function AdminOrders() {
 
     useEffect(() => {
         fetchOrders();
-
-        // Real-time subscription for all orders
+        // Real-time subscription
         const channel = supabase
             .channel('admin-orders')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'orders' },
-                () => { fetchOrders(); }
-            )
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
@@ -123,37 +101,35 @@ export default function AdminOrders() {
         const order = orders.find(o => o.id === id);
         if (!order) return;
         const currentIdx = statusFlow.findIndex(s => s.value === order.status);
-        if (currentIdx < statusFlow.length - 2) {
+        if (currentIdx >= 0 && currentIdx < statusFlow.length - 2) {
             handleStatusChange(id, statusFlow[currentIdx + 1].value);
         }
-    };
-
-    const getTransportIcon = (city: string, country: string) => {
-        const isBouake = city.toLowerCase().includes('bouaké') || city.toLowerCase().includes('bouake');
-        const isAfrican = ['Côte d\'Ivoire', 'Sénégal', 'Mali', 'Burkina Faso', 'Guinée', 'Togo', 'Bénin'].includes(country);
-        if (isBouake) return <Bike size={14} />;
-        if (!isAfrican) return <Plane size={14} />;
-        return <Truck size={14} />;
     };
 
     const getStatusInfo = (status: string) => statusFlow.find(s => s.value === status) || statusFlow[0];
 
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleDateString('fr-FR', {
-            day: '2-digit', month: '2-digit', year: 'numeric'
+            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
         });
     };
 
+    const filteredOrders = orders.filter(o =>
+        o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        o.client_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        o.city.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     if (loading) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-                <Loader2 size={40} className="spin" color="var(--primary)" />
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                <Loader2 size={48} className="spin" color="var(--primary)" />
             </div>
         );
     }
 
     return (
-        <div>
+        <div className="admin-orders-page">
             {/* NOTIFICATION */}
             {notification && (
                 <div className="admin-notification" style={{
@@ -161,316 +137,127 @@ export default function AdminOrders() {
                     background: 'white', padding: '16px 24px', borderRadius: '16px',
                     boxShadow: '0 10px 40px rgba(0,0,0,0.15)', display: 'flex',
                     alignItems: 'center', gap: '10px', fontWeight: 700, fontSize: '0.9rem',
-                    animation: 'slideInRight 0.4s ease, fadeOut 0.4s 2.6s ease forwards',
-                    borderLeft: `4px solid ${notification.type === 'error' ? '#e74c3c' : '#27AE60'}`
+                    borderLeft: `6px solid ${notification.type === 'error' ? '#e74c3c' : '#2ecc71'}`
                 }}>
+                    {notification.type === 'error' ? <X size={18} color="#e74c3c" /> : <Check size={18} color="#2ecc71" />}
                     {notification.text}
                 </div>
             )}
 
-            <div className="admin-header-flex" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div className="admin-header" style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div>
                     <h1>Gestion des Commandes</h1>
-                    <p className="subtitle">Validez et gérez le parcours de chaque commande en temps réel.</p>
+                    <p>Liste exhaustive et suivi en temps réel de toutes les livraisons.</p>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    {statusFlow.slice(0, 5).map(s => {
-                        const count = orders.filter(o => o.status === s.value).length;
-                        return count > 0 ? (
-                            <span key={s.value} className="admin-status-chip" style={{ background: `${s.color}15`, color: s.color, padding: '6px 14px', borderRadius: '50px', fontSize: '0.8rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                {statusIcons[s.iconName]} {count}
-                            </span>
-                        ) : null;
-                    })}
+                <div className="search-bar" style={{ position: 'relative', width: '300px' }}>
+                    <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }} />
+                    <input
+                        type="text"
+                        placeholder="Rechercher #ID, client, ville..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.5rem', borderRadius: '14px', border: '1.5px solid var(--border)', background: 'white' }}
+                    />
                 </div>
             </div>
 
-            {orders.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-light)' }}>
-                    <Package size={64} style={{ marginBottom: '1rem', opacity: 0.3 }} />
-                    <h3>Aucune commande pour le moment</h3>
-                    <p>Les commandes apparaîtront ici en temps réel.</p>
-                </div>
-            ) : (
-                <div className="admin-order-cards">
-                    {orders.map((order) => {
+            <div className="admin-order-list" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {filteredOrders.length === 0 ? (
+                    <div className="admin-card" style={{ textAlign: 'center', padding: '4rem' }}>
+                        <Package size={64} style={{ opacity: 0.1, marginBottom: '1.5rem' }} />
+                        <h3>Aucune commande trouvée</h3>
+                        <p>Ajustez votre recherche ou attendez de nouvelles commandes.</p>
+                    </div>
+                ) : (
+                    filteredOrders.map(order => {
                         const statusInfo = getStatusInfo(order.status);
                         const isExpanded = selectedOrder === order.id;
                         const stepIdx = statusFlow.findIndex(s => s.value === order.status);
-                        const canAdvance = stepIdx >= 0 && stepIdx < statusFlow.length - 2;
 
                         return (
-                            <div
-                                key={order.id}
-                                className={`admin-order-card ${isExpanded ? 'expanded' : ''}`}
-                                style={{ borderLeft: `4px solid ${statusInfo.color}` }}
-                            >
-                                <div className="order-card-main" onClick={() => setSelectedOrder(isExpanded ? null : order.id)}>
-                                    <div className="order-card-left">
-                                        <div className="order-status-emoji" style={{ background: `${statusInfo.color}15`, color: statusInfo.color }}>
+                            <div key={order.id} className={`admin-order-item ${isExpanded ? 'expanded' : ''}`} style={{
+                                background: 'white', borderRadius: '24px', border: `1.5px solid ${isExpanded ? 'var(--primary)' : 'rgba(0,0,0,0.03)'}`,
+                                boxShadow: isExpanded ? 'var(--shadow-md)' : 'var(--shadow-sm)', overflow: 'hidden', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                            }}>
+                                <div onClick={() => setSelectedOrder(isExpanded ? null : order.id)} style={{ padding: '1.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                        <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: `${statusInfo.color}15`, color: statusInfo.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             {statusIcons[statusInfo.iconName]}
                                         </div>
-                                        <div className="order-card-info">
-                                            <div className="order-card-title">
-                                                <strong>#{order.id.slice(0, 8)}</strong>
-                                                <span className="order-card-client">{order.client_name}</span>
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                                                <strong style={{ fontSize: '1.1rem' }}>#{order.id.slice(0, 8)}</strong>
+                                                <span style={{ fontSize: '0.9rem', color: 'var(--text-light)', fontWeight: 600 }}>{order.client_name || 'Client Web'}</span>
                                             </div>
-                                            <div className="order-card-meta">
-                                                <span><MapPin size={12} /> {order.city}, {order.country}</span>
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>{getTransportIcon(order.city, order.country)} Transport</span>
-                                                <span>{order.total.toLocaleString()} F</span>
-                                                <span>{formatDate(order.created_at)}</span>
+                                            <div style={{ display: 'flex', gap: '12px', fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: 600 }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={12} /> {order.city}</span>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={12} /> {formatDate(order.created_at)}</span>
+                                                <span style={{ color: 'var(--primary)', fontWeight: 800 }}>{order.total.toLocaleString()} F CFA</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="order-card-right">
-                                        <span className="admin-status-pill" style={{ background: `${statusInfo.color}15`, color: statusInfo.color }}>{statusInfo.label}</span>
-                                        <ChevronRight size={18} className={`expand-arrow ${isExpanded ? 'rotated' : ''}`} />
+
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                        <span style={{
+                                            background: `${statusInfo.color}15`, color: statusInfo.color, padding: '8px 16px', borderRadius: '12px',
+                                            fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px'
+                                        }}>
+                                            {statusInfo.label}
+                                        </span>
+                                        <ChevronRight size={20} style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.3s', opacity: 0.3 }} />
                                     </div>
                                 </div>
 
                                 {isExpanded && (
-                                    <div className="order-card-expanded">
-                                        {/* Mini progress bar */}
-                                        <div className="admin-mini-progress">
-                                            {statusFlow.slice(0, 5).map((s, i) => (
-                                                <div key={s.value} className={`admin-prog-step ${i <= stepIdx ? 'filled' : ''}`} style={{ background: i <= stepIdx ? s.color : '#e0e0e0' }}>
-                                                    <span>{statusIcons[s.iconName]}</span>
+                                    <div style={{ padding: '0 1.5rem 1.5rem', borderTop: '1px solid rgba(0,0,0,0.03)', background: '#FAFBFA' }}>
+                                        <div style={{ padding: '1.5rem 0', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
+                                            <div className="order-detail-box">
+                                                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-light)', textTransform: 'uppercase', marginBottom: '8px' }}>Contact</label>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
+                                                    <Phone size={14} color="var(--primary)" /> {order.client_phone || 'N/A'}
                                                 </div>
-                                            ))}
+                                            </div>
+                                            <div className="order-detail-box">
+                                                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-light)', textTransform: 'uppercase', marginBottom: '8px' }}>Détails Produit</label>
+                                                <div style={{ fontWeight: 700 }}>{order.attieke_type?.toUpperCase()} - {order.amount.toLocaleString()} F</div>
+                                            </div>
+                                            <div className="order-detail-box">
+                                                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-light)', textTransform: 'uppercase', marginBottom: '8px' }}>Adresse Livraison</label>
+                                                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{order.address}</div>
+                                            </div>
+                                            <div className="order-detail-box">
+                                                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-light)', textTransform: 'uppercase', marginBottom: '8px' }}>Actions</label>
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    {stepIdx < statusFlow.length - 2 && (
+                                                        <button
+                                                            onClick={() => advanceStatus(order.id)}
+                                                            style={{ background: statusFlow[stepIdx + 1].color, color: 'white', border: 'none', padding: '8px 16px', borderRadius: '10px', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer' }}
+                                                        >
+                                                            Suivant: {statusFlow[stepIdx + 1].label}
+                                                        </button>
+                                                    )}
+                                                    <select
+                                                        value={order.status}
+                                                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                                        style={{ padding: '8px', borderRadius: '10px', border: '1.5px solid var(--border)', fontWeight: 700, fontSize: '0.8rem' }}
+                                                    >
+                                                        {statusFlow.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
                                         </div>
-
-                                        {/* Details */}
-                                        <div className="order-expanded-details">
-                                            <div className="detail-row">
-                                                <Phone size={14} /> <span>{order.client_phone || 'Non renseigné'}</span>
-                                            </div>
-                                            <div className="detail-row">
-                                                <MapPin size={14} /> <span>{order.address}</span>
-                                            </div>
-                                            <div className="detail-row">
-                                                <Globe size={14} /> <span>{order.country}</span>
-                                            </div>
-                                            <div className="detail-row">
-                                                <Package size={14} /> <span>{order.attieke_type} - {order.amount.toLocaleString()} F + {order.delivery_fee.toLocaleString()} F livr.</span>
-                                            </div>
-                                        </div>
-
                                         {order.comment && (
-                                            <div style={{ padding: '0.8rem 1rem', background: '#f8f9fa', borderRadius: '10px', marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--text-light)' }}>
-                                                <strong>Note:</strong> {order.comment}
+                                            <div style={{ padding: '1rem', background: 'white', borderRadius: '14px', border: '1px dashed var(--border)', fontSize: '0.85rem' }}>
+                                                <strong>Note client:</strong> {order.comment}
                                             </div>
                                         )}
-
-                                        {/* Action buttons */}
-                                        <div className="order-card-actions">
-                                            {canAdvance && (
-                                                <button className="advance-btn" onClick={(e) => { e.stopPropagation(); advanceStatus(order.id); }}
-                                                    style={{ background: statusFlow[stepIdx + 1]?.color || '#333' }}>
-                                                    Passer à : {statusFlow[stepIdx + 1]?.label}
-                                                    <ChevronRight size={16} />
-                                                </button>
-                                            )}
-                                            <select
-                                                className="status-select-mini"
-                                                value={order.status}
-                                                onChange={(e) => { e.stopPropagation(); handleStatusChange(order.id, e.target.value); }}
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                {statusFlow.map(s => (
-                                                    <option key={s.value} value={s.value}>{s.label}</option>
-                                                ))}
-                                            </select>
-                                            {order.status !== 'annulee' && (
-                                                <button className="cancel-order-btn" onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id, 'annulee'); }}>
-                                                    <X size={14} /> Annuler
-                                                </button>
-                                            )}
-                                        </div>
                                     </div>
                                 )}
                             </div>
-                        );
-                    })}
-                </div>
-            )}
-
-            <style jsx>{`
-                .admin-order-cards {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 1rem;
-                }
-                .admin-order-card {
-                    background: white;
-                    border-radius: 16px;
-                    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-                    overflow: hidden;
-                    transition: all 0.3s ease;
-                    cursor: pointer;
-                }
-                .admin-order-card:hover {
-                    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-                    transform: translateY(-1px);
-                }
-                .admin-order-card.expanded {
-                    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-                }
-                .order-card-main {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 1.2rem 1.5rem;
-                }
-                .order-card-left {
-                    display: flex;
-                    align-items: center;
-                    gap: 1rem;
-                }
-                .order-status-emoji {
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 14px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 1.4rem;
-                }
-                .order-card-title {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.8rem;
-                    margin-bottom: 0.3rem;
-                }
-                .order-card-client {
-                    font-size: 0.85rem;
-                    color: var(--text-light);
-                }
-                .order-card-meta {
-                    display: flex;
-                    gap: 1rem;
-                    font-size: 0.8rem;
-                    color: var(--text-light);
-                }
-                .order-card-meta span {
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                }
-                .order-card-right {
-                    display: flex;
-                    align-items: center;
-                    gap: 1rem;
-                }
-                .admin-status-pill {
-                    padding: 6px 14px;
-                    border-radius: 50px;
-                    font-size: 0.8rem;
-                    font-weight: 700;
-                }
-                .expand-arrow {
-                    transition: transform 0.3s ease;
-                    color: var(--text-light);
-                }
-                .expand-arrow.rotated {
-                    transform: rotate(90deg);
-                }
-                .order-card-expanded {
-                    padding: 0 1.5rem 1.5rem;
-                    animation: expandDown 0.3s ease;
-                }
-                @keyframes expandDown {
-                    from { opacity: 0; max-height: 0; }
-                    to { opacity: 1; max-height: 500px; }
-                }
-                .admin-mini-progress {
-                    display: flex;
-                    gap: 4px;
-                    margin-bottom: 1.2rem;
-                }
-                .admin-prog-step {
-                    flex: 1;
-                    height: 6px;
-                    border-radius: 10px;
-                    position: relative;
-                }
-                .admin-prog-step span {
-                    display: none;
-                }
-                .order-expanded-details {
-                    display: flex;
-                    gap: 2rem;
-                    margin-bottom: 1.2rem;
-                    padding: 1rem;
-                    background: var(--background);
-                    border-radius: 12px;
-                    flex-wrap: wrap;
-                }
-                .detail-row {
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    font-size: 0.85rem;
-                    color: var(--text-light);
-                }
-                .order-card-actions {
-                    display: flex;
-                    gap: 0.8rem;
-                    align-items: center;
-                    flex-wrap: wrap;
-                }
-                .advance-btn {
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    padding: 10px 20px;
-                    border-radius: 12px;
-                    border: none;
-                    color: white;
-                    font-weight: 700;
-                    font-size: 0.85rem;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                }
-                .advance-btn:hover {
-                    opacity: 0.9;
-                    transform: translateY(-1px);
-                }
-                .status-select-mini {
-                    padding: 8px 12px;
-                    border-radius: 10px;
-                    border: 2px solid var(--border);
-                    font-weight: 600;
-                    font-size: 0.8rem;
-                    cursor: pointer;
-                    background: white;
-                }
-                .cancel-order-btn {
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                    padding: 8px 16px;
-                    border-radius: 10px;
-                    border: 2px solid #e74c3c;
-                    background: transparent;
-                    color: #e74c3c;
-                    font-weight: 600;
-                    font-size: 0.8rem;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                }
-                .cancel-order-btn:hover {
-                    background: #e74c3c;
-                    color: white;
-                }
-                @keyframes slideInRight {
-                    from { transform: translateX(100px); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes fadeOut {
-                    to { opacity: 0; transform: translateY(-10px); }
-                }
-            `}</style>
+                        )
+                    })
+                )}
+            </div>
         </div>
     );
 }

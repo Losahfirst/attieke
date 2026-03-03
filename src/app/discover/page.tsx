@@ -6,6 +6,7 @@ import {
     ShoppingCart, CheckCircle, Truck, Star, MapPin,
     ArrowRight, LogIn, User, Package, ChevronRight, Clock
 } from 'lucide-react';
+import { ProgressiveImage } from '@/components/ProgressiveImage';
 import './discover.css';
 
 const TYPES = [
@@ -103,7 +104,7 @@ export default function Discover() {
                 {TYPES.map((t) => (
                     <Link href="/order" key={t.name} className="disc-type-card">
                         <div className="disc-type-img-wrap">
-                            <Image src={t.img} alt={t.name} fill className="disc-type-img" />
+                            <ProgressiveImage src={t.img} alt={t.name} fill className="disc-type-img" />
                         </div>
                         <div className="disc-type-info">
                             <strong>{t.name}</strong>

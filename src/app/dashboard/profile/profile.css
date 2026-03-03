@@ -1,0 +1,234 @@
+.profile-page {
+    background: var(--background);
+    min-height: 100dvh;
+    padding-bottom: 120px;
+}
+
+.profile-header {
+    background: var(--surface);
+    padding: 3rem 1.5rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.profile-header h1 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin-bottom: 0.2rem;
+    color: var(--text);
+}
+
+.profile-header p {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.profile-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.profile-card {
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+}
+
+.profile-user-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar-section {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.profile-avatar-big {
+    width: 80px;
+    height: 80px;
+    border-radius: 40px;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    font-weight: 800;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(46, 125, 50, 0.2);
+}
+
+.change-photo-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    background: white;
+    border: 2px solid var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    box-shadow: var(--shadow-md);
+}
+
+.user-meta h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin: 0;
+    color: var(--text);
+}
+
+.user-meta span {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.profile-form h3 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    color: var(--text);
+}
+
+.pform-group {
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pform-group label {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pform-group input {
+    padding: 1rem;
+    background: #F8FAF9;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--text);
+    transition: var(--transition);
+}
+
+.pform-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.05);
+}
+
+.settings-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+}
+
+.settings-item:last-child {
+    border-bottom: none;
+}
+
+.s-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: #F1F4F2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+}
+
+.s-label {
+    flex: 1;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.profile-alert {
+    padding: 1rem;
+    border-radius: 14px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.profile-alert.success {
+    background: #E8F5E9;
+    color: #2E7D32;
+    border: 1px solid #C8E6C9;
+}
+
+.profile-alert.error {
+    background: #FFEBEE;
+    color: #D32F2F;
+    border: 1px solid #FFCDD2;
+}
+
+.logout-btn {
+    margin-top: 1rem;
+    padding: 1.25rem;
+    border-radius: 18px;
+    background: #FFEBEE;
+    color: #D32F2F;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    transition: var(--transition);
+}
+
+.logout-btn:active {
+    transform: scale(0.97);
+    background: #FFCDD2;
+}
+
+/* Force Light Mode in CSS */
+@media (prefers-color-scheme: dark) {
+
+    .profile-page,
+    .profile-header,
+    .profile-card,
+    .pform-group input {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+        border-color: var(--border) !important;
+    }
+
+    .s-icon {
+        background: #F1F4F2 !important;
+        color: var(--primary) !important;
+    }
+}

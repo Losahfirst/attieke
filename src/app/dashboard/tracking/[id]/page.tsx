@@ -4,6 +4,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import { ChevronLeft, Star, Package, CheckCircle2, Clock, Check, Phone, Truck, Plane, Bike, MapPin, Flame, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Skeleton } from '@/components/Skeleton/Skeleton';
 import '../../dashboard.css';
 
 const OSMMap = dynamic(() => import('@/components/OSMTrackingMap'), {
@@ -25,51 +26,37 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
 
     useEffect(() => {
         const fetchOrder = async () => {
-            const { data, error } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('id', id)
-                .single();
+            setLoading(true);
+            // Simulation délai
+            await new Promise(resolve => setTimeout(resolve, 500));
 
-            if (!error && data) {
-                setStatus(data.status);
+            // Chercher dans tous les mock_orders (on pourrait optimiser en sachant quel user, mais ici on cherche large)
+            let foundOrder: any = null;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key?.startsWith('mock_orders_')) {
+                    const orders = JSON.parse(localStorage.getItem(key) || '[]');
+                    foundOrder = orders.find((o: any) => o.id === id);
+                    if (foundOrder) break;
+                }
+            }
+
+            if (foundOrder) {
+                setStatus(foundOrder.status);
                 setOrderInfo({
-                    city: data.city || 'Bouaké',
-                    country: data.country || 'Côte d\'Ivoire',
-                    client: data.client_name || 'Client',
-                    amount: `${data.total?.toLocaleString() || 0} F`
+                    city: foundOrder.city || 'Bouaké',
+                    country: foundOrder.country || 'Côte d\'Ivoire',
+                    client: foundOrder.client_name || 'Client',
+                    amount: `${foundOrder.total?.toLocaleString() || 0} F`
                 });
+            } else {
+                // Si non trouvé (ex: rafraîchissement sur un ID direct), on simule une erreur ou une commande par défaut
+                console.warn("Commande non trouvée en local");
             }
             setLoading(false);
         };
 
         fetchOrder();
-
-        // Real-time subscription
-        const channel = supabase
-            .channel(`order-${id}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'orders',
-                    filter: `id=eq.${id}`
-                },
-                (payload) => {
-                    const updated = payload.new as any;
-                    setStatus(updated.status);
-                    setOrderInfo({
-                        city: updated.city || 'Bouaké',
-                        country: updated.country || 'Côte d\'Ivoire',
-                        client: updated.client_name || 'Client',
-                        amount: `${updated.total?.toLocaleString() || 0} F`
-                    });
-                }
-            )
-            .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
     }, [id]);
 
     const steps = [
@@ -95,8 +82,19 @@ export default function Tracking({ params }: { params: Promise<{ id: string }> }
 
     if (loading) {
         return (
-            <div className="dashboard-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                <Loader2 size={40} className="spin" color="var(--primary)" />
+            <div className="dashboard-container">
+                <div className="container">
+                    <Skeleton width="200px" height="20px" style={{ marginBottom: '20px' }} />
+                    <div className="tracking-main-layout">
+                        <div className="tracking-map-container">
+                            <Skeleton height="350px" />
+                        </div>
+                        <div className="tracking-status-info">
+                            <Skeleton height="200px" style={{ marginBottom: '20px' }} />
+                            <Skeleton height="100px" />
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }

@@ -1,21 +1,36 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
-  --primary: #D4AF37;
-  --primary-dark: #B8860B;
-  --secondary: #2E7D32;
-  --secondary-light: #4CAF50;
-  --background: #FAFAFA;
+  --primary: #1B4332;
+  --primary-dark: #081C15;
+  --accent: #D4AF37;
+  --background: #F8FAF9;
   --surface: #FFFFFF;
-  --text: #2C3E50;
-  --text-light: #7F8C8D;
-  --error: #E74C3C;
-  --success: #27AE60;
-  --border: #E0E0E0;
-  --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  --radius: 12px;
-  --transition: all 0.3s ease;
-  --bottom-nav-height: 70px;
+  --text: #1A1C1E;
+  --text-light: #70777B;
+  --error: #FF5252;
+  --success: #00C853;
+  --border: #F1F3F2;
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.12);
+  --radius: 20px;
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --bottom-nav-height: 75px;
+}
+
+/* 
+   FORCE LIGHT MODE
+   We use the same variables even if system is dark
+*/
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #F8FAF9;
+    --surface: #FFFFFF;
+    --text: #1A1C1E;
+    --text-light: #70777B;
+    --border: #F1F3F2;
+  }
 }
 
 * {
@@ -32,11 +47,19 @@ html {
 html,
 body {
   max-width: 100vw;
+  min-height: 100dvh;
   overflow-x: hidden;
   font-family: 'Outfit', sans-serif;
-  background-color: var(--background);
-  color: var(--text);
+  background-color: var(--background) !important;
+  color: var(--text) !important;
   line-height: 1.6;
+}
+
+body.no-scroll {
+  overflow: hidden;
+  height: 100dvh;
+  position: fixed;
+  width: 100%;
 }
 
 a {
@@ -69,25 +92,29 @@ h3,
 h4,
 h5,
 h6 {
-  font-weight: 700;
-  line-height: 1.2;
+  font-weight: 800;
+  line-height: 1.1;
   margin-bottom: 1rem;
+  color: var(--text);
 }
 
 .premium-btn {
   background-color: var(--primary);
-  color: white;
-  padding: 0.8rem 2rem;
+  color: white !important;
+  padding: 1rem 2rem;
   border-radius: var(--radius);
-  font-weight: 600;
-  display: inline-block;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 10px 25px rgba(46, 125, 50, 0.2);
   transition: var(--transition);
 }
 
 .premium-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+  box-shadow: 0 15px 30px rgba(46, 125, 50, 0.3);
   background-color: var(--primary-dark);
 }
 
@@ -101,89 +128,31 @@ h6 {
   transition: var(--transition);
 }
 
-.outline-btn:hover {
-  background-color: var(--primary);
-  color: white;
-}
-
-/* Glassmorphism utility */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-/* MOBILE scrolling fix : add padding bottom so content is not hidden behind bottom nav */
-.main-content {
-  min-height: 100vh;
-}
-
-.mobile-only {
-  display: none;
-}
-
-.desktop-only {
-  display: block;
-}
-
-/* ==============================
-   MOBILE STYLES
-   ============================== */
 @media (max-width: 768px) {
   .container {
-    padding: 0 1rem;
+    padding: 0 1.5rem;
   }
 
   h1 {
-    font-size: 2rem !important;
+    font-size: 2.2rem !important;
   }
 
   h2 {
-    font-size: 1.6rem !important;
+    font-size: 1.8rem !important;
   }
 
-  /* Add padding at bottom so content doesn't hide behind bottom nav */
   .main-content {
-    padding-bottom: var(--bottom-nav-height);
-  }
-
-  /* Hide desktop navbar links on mobile - keep only logo */
-  .nav-links {
-    display: none !important;
-  }
-
-  /* Navbar becomes minimal top bar on mobile */
-  .navbar {
-    padding: 0.6rem 1rem !important;
-  }
-
-  .nav-content {
-    justify-content: center !important;
-    padding: 0 !important;
-  }
-
-  .logo-text {
-    font-size: 1.1rem !important;
-  }
-
-  .mobile-only {
-    display: block;
-  }
-
-  .desktop-only {
-    display: none;
-  }
-
-  /* Buttons full width on mobile */
-  .premium-btn,
-  .outline-btn {
-    padding: 0.9rem 1.5rem;
-    font-size: 0.95rem;
+    padding-bottom: calc(var(--bottom-nav-height) + 20px);
   }
 }
 
-/* Spin animation for loaders */
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -192,82 +161,4 @@ h6 {
 
 .spin {
   animation: spin 1s linear infinite;
-}
-
-/* Safe area support for notched phones */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  @media (max-width: 768px) {
-    .main-content {
-      padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
-    }
-  }
-}
-
-/* ═══════════════════════════════════════
-   DARK MODE SYSTÈME — toutes pages
-   S'active uniquement si le téléphone
-   est en mode sombre
-═══════════════════════════════════════ */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111714;
-    --surface: #1a2118;
-    --text: #f0f0f0;
-    --text-light: rgba(255, 255, 255, 0.45);
-    --border: rgba(255, 255, 255, 0.08);
-    --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  }
-
-  html,
-  body {
-    background-color: var(--background);
-    color: var(--text);
-  }
-
-  /* Cards and surfaces */
-  .glass {
-    background: rgba(26, 33, 24, 0.85) !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-  }
-
-  /* Navbar on dark */
-  .navbar {
-    background: rgba(17, 23, 20, 0.95) !important;
-    border-bottom-color: rgba(255, 255, 255, 0.06) !important;
-  }
-
-  /* White cards become dark */
-  .order-form-card,
-  .dashboard-container,
-  .orders-table-container,
-  .info-card,
-  .tracking-card {
-    background: var(--surface) !important;
-    color: var(--text) !important;
-  }
-
-  /* Tables */
-  .orders-table th {
-    background: rgba(255, 255, 255, 0.04) !important;
-    color: var(--text-light) !important;
-  }
-
-  .orders-table td {
-    border-top-color: var(--border) !important;
-  }
-
-  /* Inputs */
-  input,
-  select,
-  textarea {
-    background: #1a2118 !important;
-    color: var(--text) !important;
-    border-color: var(--border) !important;
-  }
-
-  /* Bottom nav dark */
-  .bottom-nav {
-    background: rgba(17, 23, 20, 0.95) !important;
-    border-top-color: rgba(255, 255, 255, 0.06) !important;
-  }
 }

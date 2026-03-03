@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Utensils } from 'lucide-react';
+import { ChevronRight, Utensils, ArrowRight } from 'lucide-react';
+import Image from 'next/image';
 import './SplashScreen.css';
 
 export default function SplashScreen() {
@@ -15,40 +16,70 @@ export default function SplashScreen() {
         if (splashShown) return;
 
         setVisible(true);
+        document.body.classList.add('no-scroll');
 
-        const timer = setTimeout(() => {
-            setFadeOut(true);
-            setTimeout(() => {
-                setVisible(false);
-                sessionStorage.setItem('splashShown', 'true');
-            }, 500);
-        }, 2500);
-
-        return () => clearTimeout(timer);
+        return () => {
+            document.body.classList.remove('no-scroll');
+        };
     }, []);
+
+    const handleContinue = () => {
+        setFadeOut(true);
+        setTimeout(() => {
+            setVisible(false);
+            document.body.classList.remove('no-scroll');
+            sessionStorage.setItem('splashShown', 'true');
+        }, 500);
+    };
 
     if (!visible) return null;
 
     return (
         <div className={`splash ${fadeOut ? 'splash--out' : ''}`}>
-            {/* Background image with overlay */}
-            <div className="splash__bg" />
-
-            {/* Center content */}
-            <div className="splash__body">
-                <div className="splash__icon">
-                    <Utensils size={36} color="#D4AF37" strokeWidth={1.5} />
+            {/* Header / Logo */}
+            <div className="splash__header">
+                <div className="splash__logo_wrap">
+                    <div className="splash__logo_icon">
+                        <Utensils size={18} />
+                    </div>
+                    <span className="splash__logo_text">Attiéké Express</span>
                 </div>
-                <h1 className="splash__name">Attiéké Express</h1>
-                <p className="splash__tagline">Côte d'Ivoire</p>
+                <span className="splash__logo_sub">Authentique de Bouaké</span>
             </div>
 
-            {/* Bottom */}
-            <div className="splash__footer">
-                <div className="splash__bar">
-                    <div className="splash__bar-fill" />
+            {/* Illustration */}
+            <div className="splash__illustration">
+                <img
+                    src="/images/onboarding.png"
+                    alt="Livraison Attiéké"
+                />
+            </div>
+
+            {/* Content Section */}
+            <div className="splash__content">
+                <h2 className="splash__title">
+                    Rapide, Frais, et <span>Toujours</span> à Temps.
+                </h2>
+                <p className="splash__desc">
+                    Recevez votre attiéké préféré de Molonoublé directement à votre porte, n'importe où à Bouaké.
+                </p>
+
+                {/* Pagination Dots */}
+                <div className="splash__pagination">
+                    <div className="splash__dot" />
+                    <div className="splash__dot" />
+                    <div className="splash__dot splash__dot--active" />
                 </div>
-                <span className="splash__origin">Molonoublé · Bouaké</span>
+
+                {/* Footer Buttons */}
+                <div className="splash__footer">
+                    <button className="splash__btn_skip" onClick={handleContinue}>
+                        Passer <ChevronRight size={16} />
+                    </button>
+                    <button className="splash__btn_continue" onClick={handleContinue}>
+                        Continuer <ArrowRight size={20} />
+                    </button>
+                </div>
             </div>
         </div>
     );

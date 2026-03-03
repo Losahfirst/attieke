@@ -7,21 +7,14 @@ import { useAuth } from '@/context/AuthContext';
 import { LogIn, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 import '../auth.css';
 
-declare global {
-    interface Window {
-        google: any;
-    }
-}
-
 export default function Login() {
     const router = useRouter();
-    const { signIn, signInWithIdToken, signInWithGoogle } = useAuth();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const { signIn, user, loading: authLoading } = useAuth();
+    const [identifier, setIdentifier] = useState('0700000000');
+    const [password, setPassword] = useState('123456');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { user, loading: authLoading } = useAuth();
 
     useEffect(() => {
         if (!authLoading && user) {
@@ -29,56 +22,14 @@ export default function Login() {
         }
     }, [user, authLoading, router]);
 
-
-    useEffect(() => {
-        const handleCredentialResponse = async (response: any) => {
-            setLoading(true);
-            const { error } = await signInWithIdToken(response.credential);
-            if (error) {
-                setError(error);
-                setLoading(false);
-            } else {
-                router.push('/dashboard');
-            }
-        };
-
-        if (window.google) {
-            try {
-                window.google.accounts.id.initialize({
-                    client_id: "55615937047-o8esffj05qo85v6thndq66661bna0r1d.apps.googleusercontent.com",
-                    callback: handleCredentialResponse,
-                    auto_select: false,
-                    cancel_on_tap_outside: true,
-                });
-
-                window.google.accounts.id.renderButton(
-                    document.getElementById("googleSignInButton"),
-                    { theme: "outline", size: "large", width: "100%", text: "continue_with", shape: "rectangular" }
-                );
-            } catch (err) {
-                console.error("Google GIS initialization failed:", err);
-            }
-        }
-    }, [signInWithIdToken, router]);
-
-    const handleGoogleOAuth = async () => {
-        setLoading(true);
-        try {
-            await signInWithGoogle();
-        } catch (err: any) {
-            setError(err.message || "Erreur de connexion Google");
-            setLoading(false);
-        }
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(identifier, password);
         if (error) {
-            setError('Email ou mot de passe incorrect.');
+            setError('Identifiants incorrects.');
             setLoading(false);
         } else {
             router.push('/dashboard');
@@ -88,15 +39,20 @@ export default function Login() {
     return (
         <div className="authContainer">
             <div className="authWrapper glass">
-                <div className="authImage">
+                <div className="authImage desk-only">
                     <img src="/images/attieke-bag.jpg" alt="Attiéké Express" />
                     <div className="imageOverlay">
-                        <h3>Bienvenue chez Attiéké Express</h3>
-                        <p>Le meilleur de la Côte d&apos;Ivoire, livré chez vous.</p>
+                        <h3>Bienvenue sur <br />Attiéké Express</h3>
+                        <p>Le meilleur de la Côte d'Ivoire, livré chez vous.</p>
                     </div>
                 </div>
+
                 <div className="authCard">
-                    <h2>Connexion</h2>
+                    <h1>Login</h1>
+                    <p className="authSubtitle">
+                        Connectez-vous pour gérer vos commandes. <br />
+                        Nouveau ? <Link href="/signup">Créer un compte</Link>
+                    </p>
 
                     {error && (
                         <div className="authError">
@@ -107,22 +63,23 @@ export default function Login() {
 
                     <form onSubmit={handleSubmit}>
                         <div className="formGroup">
-                            <label>Email</label>
+                            <label>Email ou Téléphone</label>
                             <input
-                                type="email"
-                                placeholder="votre@email.com"
+                                type="text"
+                                placeholder="votre@email.com ou 07..."
                                 required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                value={identifier}
+                                onChange={(e) => setIdentifier(e.target.value)}
                                 disabled={loading}
                             />
                         </div>
+
                         <div className="formGroup">
                             <label>Mot de passe</label>
                             <div className="passwordField">
                                 <input
                                     type={showPassword ? 'text' : 'password'}
-                                    placeholder="••••••••"
+                                    placeholder="Enter password here"
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -138,34 +95,40 @@ export default function Login() {
                                 </button>
                             </div>
                         </div>
-                        <button type="submit" className="premium-btn authBtn" disabled={loading}>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', fontSize: '0.85rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--text-light)' }}>
+                                <input type="checkbox" style={{ width: '16px', height: '16px' }} />
+                                Remember Me
+                            </label>
+                            <Link href="#" style={{ color: 'var(--primary)', fontWeight: '700' }}>Forgot password?</Link>
+                        </div>
+
+                        <button type="submit" className="authBtn" disabled={loading}>
                             {loading ? (
                                 <><Loader2 size={18} className="spin" /> Connexion...</>
                             ) : (
-                                <><LogIn size={18} style={{ marginRight: '8px' }} /> Se connecter</>
+                                "Login"
                             )}
                         </button>
                     </form>
 
-                    <div className="authDivider">
-                        <span>ou</span>
+                    <div className="authDivider"><span>or</span></div>
+
+                    <div className="socialLogins">
+                        <div className="socialBtn">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" alt="Google" />
+                        </div>
+                        <div className="socialBtn">
+                            <img src="https://cdn-icons-png.flaticon.com/512/0/747.png" alt="Apple" />
+                        </div>
+                        <div className="socialBtn">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" />
+                        </div>
+                        <div className="socialBtn">
+                            <img src="https://cdn-icons-png.flaticon.com/512/124/124010.png" alt="Facebook" />
+                        </div>
                     </div>
-
-                    <div id="googleSignInButton" style={{ width: '100%', marginBottom: '10px' }}></div>
-
-                    <button
-                        type="button"
-                        className="googleOAuthBtn"
-                        onClick={handleGoogleOAuth}
-                        disabled={loading}
-                    >
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="18" height="18" />
-                        Alternative Google Login
-                    </button>
-
-                    <p className="authFooter">
-                        Pas encore de compte ? <Link href="/signup">S&apos;inscrire</Link>
-                    </p>
                 </div>
             </div>
         </div>

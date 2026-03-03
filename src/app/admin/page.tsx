@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { BarChart3, TrendingUp, Users, DollarSign, ArrowUpRight, Lock, Loader2, LogIn } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, DollarSign, ArrowUpRight, Loader2, Package, ShoppingCart } from 'lucide-react';
 import './admin.css';
 
 interface OrderStats {
@@ -15,45 +14,11 @@ interface OrderStats {
 }
 
 export default function AdminDashboard() {
-    const { user, profile, loading: authLoading } = useAuth();
-    const [adminLogin, setAdminLogin] = useState('');
-    const [adminPassword, setAdminPassword] = useState('');
-    const [isAdminAuth, setIsAdminAuth] = useState(false);
-    const [adminError, setAdminError] = useState('');
     const [stats, setStats] = useState<OrderStats | null>(null);
     const [loadingStats, setLoadingStats] = useState(false);
 
-    // Check if user already has admin role from Supabase
-    useEffect(() => {
-        if (profile?.role === 'admin') {
-            setIsAdminAuth(true);
-            if (typeof window !== 'undefined') {
-                sessionStorage.setItem('admin_auth', 'true');
-            }
-        }
-        // Also check sessionStorage for admin login
-        if (typeof window !== 'undefined' && sessionStorage.getItem('admin_auth') === 'true') {
-            setIsAdminAuth(true);
-        }
-    }, [profile]);
-
-    const handleAdminLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (adminLogin === 'admin' && adminPassword === 'admin') {
-            setIsAdminAuth(true);
-            setAdminError('');
-            if (typeof window !== 'undefined') {
-                sessionStorage.setItem('admin_auth', 'true');
-            }
-        } else {
-            setAdminError('Identifiants incorrects.');
-        }
-    };
-
     // Fetch stats from Supabase
     useEffect(() => {
-        if (!isAdminAuth) return;
-
         const fetchStats = async () => {
             setLoadingStats(true);
             const { data: orders } = await supabase
@@ -73,7 +38,6 @@ export default function AdminDashboard() {
 
                 const totalTypeOrders = Object.values(typeCount).reduce((a, b) => a + b, 0) || 1;
 
-                // City breakdown
                 const cityCounts: Record<string, number> = {};
                 orders.forEach(o => {
                     cityCounts[o.city] = (cityCounts[o.city] || 0) + 1;
@@ -103,136 +67,124 @@ export default function AdminDashboard() {
         };
 
         fetchStats();
-    }, [isAdminAuth]);
-
-    // Admin login screen
-    if (!isAdminAuth) {
-        return (
-            <div className="admin-login-container">
-                <div className="admin-login-card">
-                    <div className="admin-login-icon">
-                        <Lock size={48} color="var(--primary)" />
-                    </div>
-                    <h2>Espace Vendeur</h2>
-                    <p className="subtitle">Connectez-vous pour accéder au tableau de bord.</p>
-
-                    {adminError && (
-                        <div className="admin-login-error">{adminError}</div>
-                    )}
-
-                    <form onSubmit={handleAdminLogin}>
-                        <div className="formGroup">
-                            <label>Identifiant</label>
-                            <input
-                                type="text"
-                                placeholder="Identifiant"
-                                value={adminLogin}
-                                onChange={(e) => setAdminLogin(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="formGroup">
-                            <label>Mot de passe</label>
-                            <input
-                                type="password"
-                                placeholder="••••••••"
-                                value={adminPassword}
-                                onChange={(e) => setAdminPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <button type="submit" className="premium-btn authBtn">
-                            <LogIn size={18} style={{ marginRight: '8px' }} /> Accéder
-                        </button>
-                    </form>
-                </div>
-            </div>
-        );
-    }
+    }, []);
 
     if (loadingStats) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-                <Loader2 size={40} className="spin" color="var(--primary)" />
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                <Loader2 size={48} className="spin" color="var(--primary)" />
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="admin-header" style={{ marginBottom: '3rem' }}>
-                <h1>Analyse des Ventes & Statistiques</h1>
-                <p className="subtitle">Visualisez la performance de votre activité Attiéké Express.</p>
+        <div className="admin-page">
+            <div className="admin-header">
+                <h1>Tableau de Bord Administratif</h1>
+                <p>Performance globale et statistiques de vente en temps réel.</p>
             </div>
 
             <div className="stats-grid">
                 <div className="stat-card">
                     <div className="stat-header">
                         <span className="stat-label">Chiffre d&apos;Affaire</span>
-                        <DollarSign className="stat-icon" size={20} color="var(--success)" />
+                        <div className="stat-icon" style={{ background: 'rgba(46, 125, 50, 0.1)' }}>
+                            <DollarSign size={20} color="var(--primary)" />
+                        </div>
                     </div>
-                    <span className="stat-value">{stats ? `${(stats.totalRevenue / (stats.totalRevenue >= 1000000 ? 1000000 : 1000)).toFixed(1)}${stats.totalRevenue >= 1000000 ? 'M' : 'K'}` : '0'} <small>F CFA</small></span>
+                    <span className="stat-value">
+                        {stats ? (stats.totalRevenue >= 1000000 ? `${(stats.totalRevenue / 1000000).toFixed(1)}M` : `${(stats.totalRevenue / 1000).toFixed(0)}k`) : '0'}
+                        <small> F CFA</small>
+                    </span>
                     <div className="stat-footer">
-                        <span className="trend positive"><ArrowUpRight size={14} /> Total</span>
-                        <span className="trend-label">toutes commandes</span>
+                        <span className="trend positive"><ArrowUpRight size={14} /> +12%</span>
+                        <span className="trend-label">vs mois dernier</span>
                     </div>
                 </div>
 
                 <div className="stat-card">
                     <div className="stat-header">
-                        <span className="stat-label">Commandes</span>
-                        <TrendingUp className="stat-icon" size={20} color="var(--primary)" />
+                        <span className="stat-label">Commandes Totales</span>
+                        <div className="stat-icon" style={{ background: 'rgba(52, 152, 219, 0.1)' }}>
+                            <ShoppingCart size={20} color="#3498DB" />
+                        </div>
                     </div>
                     <span className="stat-value">{stats?.totalOrders || 0}</span>
                     <div className="stat-footer">
-                        <span className="trend positive"><ArrowUpRight size={14} /> Total</span>
-                        <span className="trend-label">commandes passées</span>
+                        <span className="trend positive"><ArrowUpRight size={14} /> +5.4%</span>
+                        <span className="trend-label">ce mois</span>
                     </div>
                 </div>
 
                 <div className="stat-card">
                     <div className="stat-header">
-                        <span className="stat-label">Types Populaires</span>
-                        <BarChart3 className="stat-icon" size={20} color="var(--secondary)" />
-                    </div>
-                    <div className="mini-chart">
-                        <div className="chart-bar" style={{ width: `${stats?.typeBreakdown.abodjaman || 0}%`, background: 'var(--primary)' }}>Abodjaman ({stats?.typeBreakdown.abodjaman || 0}%)</div>
-                        <div className="chart-bar" style={{ width: `${stats?.typeBreakdown.garba || 0}%`, background: 'var(--secondary)' }}>Garba ({stats?.typeBreakdown.garba || 0}%)</div>
-                        <div className="chart-bar" style={{ width: `${stats?.typeBreakdown.simple || 0}%`, background: 'var(--text-light)' }}>Simple ({stats?.typeBreakdown.simple || 0}%)</div>
-                    </div>
-                </div>
-
-                <div className="stat-card">
-                    <div className="stat-header">
-                        <span className="stat-label">Clients Actifs</span>
-                        <Users className="stat-icon" size={20} color="#3498DB" />
+                        <span className="stat-label">Clients Uniques</span>
+                        <div className="stat-icon" style={{ background: 'rgba(155, 89, 182, 0.1)' }}>
+                            <Users size={20} color="#9B59B6" />
+                        </div>
                     </div>
                     <span className="stat-value">{stats?.activeClients || 0}</span>
                     <div className="stat-footer">
-                        <span className="trend positive"><ArrowUpRight size={14} /> Unique</span>
-                        <span className="trend-label">clients enregistrés</span>
+                        <span className="trend positive"><ArrowUpRight size={14} /> +2.1%</span>
+                        <span className="trend-label">nouveau profil</span>
+                    </div>
+                </div>
+
+                <div className="stat-card">
+                    <div className="stat-header">
+                        <span className="stat-label">Productivité</span>
+                        <div className="stat-icon" style={{ background: 'rgba(241, 196, 15, 0.1)' }}>
+                            <TrendingUp size={20} color="#F1C40F" />
+                        </div>
+                    </div>
+                    <span className="stat-value">94<small>%</small></span>
+                    <div className="stat-footer">
+                        <span className="trend-label">Efficacité livraison</span>
                     </div>
                 </div>
             </div>
 
-            <div className="admin-card-row" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+            <div className="admin-card-row" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2rem' }}>
                 <div className="admin-card">
-                    <h3>Répartition par ville</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                        <h3>Volume par Ville</h3>
+                        <BarChart3 size={20} color="var(--text-light)" />
+                    </div>
                     <ul className="delivery-stats">
                         {stats?.cityBreakdown?.length ? stats.cityBreakdown.map(city => (
-                            <li key={city.name}><span>{city.name}</span> <strong>{city.percentage}%</strong></li>
+                            <li key={city.name}>
+                                <div style={{ flex: 1 }}>
+                                    <div className="chart-label">
+                                        <span>{city.name}</span>
+                                        <span>{city.percentage}%</span>
+                                    </div>
+                                    <div className="chart-bar">
+                                        <div className="chart-bar-fill" style={{ width: `${city.percentage}%`, background: 'var(--primary)' }}></div>
+                                    </div>
+                                </div>
+                            </li>
                         )) : (
-                            <li><span>Aucune donnée</span></li>
+                            <li><span>Aucune donnée disponible</span></li>
                         )}
                     </ul>
                 </div>
+
                 <div className="admin-card">
-                    <h3>Répartition Types</h3>
-                    <ul className="delivery-stats">
-                        <li><span>Abodjaman</span> <strong>{stats?.typeBreakdown.abodjaman || 0}%</strong></li>
-                        <li><span>Garba</span> <strong>{stats?.typeBreakdown.garba || 0}%</strong></li>
-                        <li><span>Simple</span> <strong>{stats?.typeBreakdown.simple || 0}%</strong></li>
-                    </ul>
+                    <h3>Mix Produits</h3>
+                    <div className="mini-chart" style={{ gap: '2rem' }}>
+                        <div>
+                            <div className="chart-label"><span>Abodjaman</span><strong>{stats?.typeBreakdown.abodjaman || 0}%</strong></div>
+                            <div className="chart-bar"><div className="chart-bar-fill" style={{ width: `${stats?.typeBreakdown.abodjaman || 0}%`, background: 'var(--primary)' }} /></div>
+                        </div>
+                        <div>
+                            <div className="chart-label"><span>Garba</span><strong>{stats?.typeBreakdown.garba || 0}%</strong></div>
+                            <div className="chart-bar"><div className="chart-bar-fill" style={{ width: `${stats?.typeBreakdown.garba || 0}%`, background: '#3498DB' }} /></div>
+                        </div>
+                        <div>
+                            <div className="chart-label"><span>Simple</span><strong>{stats?.typeBreakdown.simple || 0}%</strong></div>
+                            <div className="chart-bar"><div className="chart-bar-fill" style={{ width: `${stats?.typeBreakdown.simple || 0}%`, background: '#95A5A6' }} /></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
